@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Lista de Compras & Comparador (Joinville)</title>
   
-  <!-- Ícone Oficial do iOS e Favicon PNG -->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=1">
   <link rel="icon" type="image/png" sizes="32x32" href="/apple-touch-icon.png">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -17,7 +19,7 @@
   <!-- Material Icons & Google Fonts -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- FontAwesome Icons for Comparison Tab -->
+  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
@@ -58,7 +60,6 @@
       padding-bottom: 95px;
     }
 
-    /* HEADER */
     header {
       position: sticky;
       top: 0;
@@ -329,7 +330,7 @@
     }
 
     .item-desc-subtitle {
-      font-size: 0.76rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       margin-top: 1px;
       font-weight: 400;
@@ -560,7 +561,7 @@
       margin-bottom: 4px;
     }
 
-    .form-group input, .form-group select {
+    .form-group input, .form-group select, .form-group textarea {
       width: 100%;
       padding: 10px 12px;
       border: 1px solid var(--border);
@@ -668,6 +669,46 @@
       margin-top: 4px;
       font-size: 0.7rem;
     }
+
+    .cached-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 2px;
+    }
+
+    .grounding-status {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .grounding-status.success {
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .grounding-status.info {
+      background-color: #f0f9ff;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+
+    .grounding-status.warning {
+      background-color: #fffbebf;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
   </style>
 </head>
 <body>
@@ -726,66 +767,65 @@
       <div class="compare-card space-y-4">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
           <div>
-            <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text);">Comparador de Preços</h2>
-            <p style="font-size: 0.8rem; color: var(--text-muted);">Cotação de Mercados via Gemini 3.8 Flash</p>
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text);">Comparador de Preços (Joinville)</h2>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Cache Inteligente de 24h + Busca Otimizada em Gemini API</p>
           </div>
           <button onclick="openConfigModal()" style="font-size: 0.8rem; font-weight: 600; background: #f1f5f9; border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; cursor: pointer;">
-            <i class="fa-solid fa-key" style="margin-right: 4px; color: var(--text-muted);"></i> Key Gemini
+            <i class="fa-solid fa-key" style="margin-right: 4px; color: var(--text-muted);"></i> Configurar
           </button>
         </div>
 
         <p style="font-size: 0.85rem; color: #475569; margin-top: 10px;">
-          Serão cotados apenas os <b>itens ativos na sua lista de compras</b>. A busca considerará a marca/especificação definida no cadastro do produto.
+          A cotação reutiliza dados válidos pesquisados nas últimas 24 horas para economizar tokens:
         </p>
 
-        <button id="btnFetchPrices" onclick="fetchPricesOnDemand()" style="width: 100%; margin-top: 12px; background: linear-gradient(135deg, #10b981, #047857); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--shadow-sm);">
-          <i class="fa-solid fa-magnifying-glass-dollar"></i> Buscar Preços (On-Demand)
-        </button>
+        <!-- Force Refresh Toggle -->
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
+          <input type="checkbox" id="forceRefreshToggle" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
+          <label for="forceRefreshToggle" style="font-size: 0.82rem; font-weight: 600; color: var(--text); cursor: pointer;">
+            Recotar Tudo (Forçar busca online no Gemini, ignorar cache de 24h)
+          </label>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+          <button id="btnFetchPrices" onclick="fetchPricesOnDemand()" style="width: 100%; background: linear-gradient(135deg, #10b981, #047857); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--shadow-sm);">
+            <i class="fa-solid fa-magnifying-glass-dollar"></i> Buscar Preços em Joinville (On-Demand)
+          </button>
+
+          <button id="btnGeneratePrompt" onclick="generateAndCopyAIPrompt()" style="width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--shadow-sm);">
+            <span class="material-icons-outlined" style="font-size: 1.2rem;">psychology</span> Gerar & Copiar Prompt para IAs
+          </button>
+        </div>
       </div>
 
       <!-- Loading State -->
       <div id="compareLoading" style="display: none; text-align: center; padding: 30px 20px; background: #fff; border-radius: var(--radius); border: 1px solid var(--border);">
         <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
-        <p style="font-weight: 700; font-size: 0.95rem; color: var(--text);">Pesquisando nos supermercados configurados...</p>
-        <p style="font-size: 0.8rem; color: var(--text-muted);">Analisando marcas e observações via Gemini 3.8 Flash</p>
+        <p id="loadingTitle" style="font-weight: 700; font-size: 0.95rem; color: var(--text);">Pesquisando preços reais em Joinville via Google Search...</p>
+        <p id="loadingSub" style="font-size: 0.8rem; color: var(--text-muted);">Consultando apenas itens não cotados nas últimas 24 horas</p>
       </div>
 
       <!-- Results Container -->
       <div id="compareResults" style="display: none;" class="space-y-4">
         
-        <!-- Smart Split Basket Summary -->
-        <div style="background: linear-gradient(135deg, #064e3b, #0f172a); color: #fff; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-md);">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 10px;">
-            <div>
-              <h3 style="font-size: 1rem; font-weight: 800; color: #a7f3d0;"><i class="fa-solid fa-basket-shopping"></i> Cesta Inteligente Otimizada</h3>
-              <p style="font-size: 0.75rem; color: #cbd5e1;">Menor custo combinando as melhores ofertas por loja</p>
-            </div>
-            <div style="text-align: right;">
-              <span style="font-size: 0.7rem; text-transform: uppercase; color: #a7f3d0; font-weight: 700; display: block;">Total Otimizado</span>
-              <span id="optimizedTotalVal" style="font-size: 1.3rem; font-weight: 900; color: #34d399;">R$ 0,00</span>
-            </div>
-          </div>
-
-          <div style="margin-top: 10px; font-size: 0.8rem; color: #e2e8f0;">
-            <p>Economia estimada: <b id="optimizedSavingsVal" style="color: #a7f3d0;">R$ 0,00</b> em relação à compra em loja única.</p>
-          </div>
+        <!-- Grounding & Cache Status Indicator -->
+        <div id="groundingBadge" class="grounding-status success">
+          <i class="fa-solid fa-shield-check"></i>
+          <span id="groundingText">Resultados atualizados combinando Cache de 24h + Busca em Tempo Real</span>
         </div>
+
+        <!-- Sorted Expandable Baskets List -->
+        <div id="sortedBasketList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;"></div>
 
         <!-- Matrix Table Card -->
         <div class="compare-card" style="overflow-x: auto;">
           <h3 style="font-size: 1rem; font-weight: 800; color: var(--text);">Matriz de Preços por Mercado</h3>
-          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">Preço final (Qtd × Unidade) + Produto Encontrado</p>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">Preço final (Qtd × Unidade) + Detalhes do Produto</p>
 
           <table class="compare-table">
-            <thead>
-              <!-- Dynamic JS Header -->
-            </thead>
-            <tbody id="compareTableBody">
-              <!-- Dynamic JS Body -->
-            </tbody>
-            <tfoot>
-              <!-- Dynamic JS Footer -->
-            </tfoot>
+            <thead></thead>
+            <tbody id="compareTableBody"></tbody>
+            <tfoot></tfoot>
           </table>
         </div>
 
@@ -872,11 +912,31 @@
     </div>
   </div>
 
+  <!-- MODAL: PROMPT OUTPUT FALLBACK -->
+  <div class="modal-overlay" id="promptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Prompt Gerado para IAs</h3>
+        <span class="material-icons-outlined" onclick="closePromptModal()" style="cursor:pointer;">close</span>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+        Copie o texto abaixo e cole no ChatGPT, Claude, Gemini ou Perplexity para consultar os preços atuais:
+      </p>
+      <div class="form-group">
+        <textarea id="promptTextArea" rows="10" readonly style="font-family: monospace; font-size: 0.8rem;"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="copyPromptTextFromModal()">
+        <span class="material-icons-outlined">content_copy</span> Copiar Prompt
+      </button>
+      <button class="btn btn-secondary" onclick="closePromptModal()">Fechar</button>
+    </div>
+  </div>
+
   <!-- MODAL: CONFIG & FIREBASE -->
   <div class="modal-overlay" id="configModal">
     <div class="modal">
       <div class="modal-header">
-        <h3>Sincronização & APIs</h3>
+        <h3>Sincronização & Configurações</h3>
         <span class="material-icons-outlined" onclick="closeConfigModal()" style="cursor:pointer;">close</span>
       </div>
       <div class="form-group">
@@ -890,24 +950,31 @@
       <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Supermercados Pesquisados</h4>
       <div class="form-group">
         <label>Lista de Supermercados (separados por vírgula)</label>
-        <input type="text" id="supermarketsInput" placeholder="Ex: Angeloni, Giassi, Fort Atacadista">
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Estes supermercados serão usados como colunas na comparação de preços.</p>
+        <input type="text" id="supermarketsInput" placeholder="Ex: Angeloni, Giassi">
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Padrão: Angeloni, Giassi em Joinville/SC.</p>
       </div>
 
       <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
 
-      <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Configuração Gemini 3.8 Flash (Preços)</h4>
+      <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Configuração Gemini AI (Preços)</h4>
+      <div class="form-group">
+        <label>Modelo Gemini</label>
+        <select id="geminiModelInput">
+          <option value="gemini-3.8-flash">Gemini 3.8 Flash (Padrão Recomendado)</option>
+          <option value="gemini-3.8-flash-lite">Gemini 3.8 Flash-Lite (Rápido & Econômico)</option>
+        </select>
+      </div>
       <div class="form-group">
         <label>Chave da API Gemini</label>
         <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy...">
         <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Deixe em branco para usar o Modo Simulação Offline.</p>
       </div>
-      <button class="btn btn-primary" onclick="saveGeminiConfig()" style="background: #059669;">Salvar Chave & Supermercados</button>
+      <button class="btn btn-primary" onclick="saveGeminiConfig()" style="background: #059669;">Salvar Chave & Configurações</button>
 
       <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
 
       <div class="form-group">
-        <label>Compartilhar Sala com Alguém</label>
+        <label>Compartilhar Sala</label>
         <button class="btn btn-secondary" onclick="copyShareLink()">
           <span class="material-icons-outlined">content_copy</span> Copiar Link do App
         </button>
@@ -1107,12 +1174,16 @@
     let currentRoom = 'padrao';
     let itemsList = [];
     let catalogCategories = [];
+    let priceCache = {};
     let openCategories = new Set();
     let activeFirebaseRef = null;
     let activeFirebaseListener = null;
 
     let geminiApiKey = localStorage.getItem('app_gemini_key') || '';
+    let geminiModel = localStorage.getItem('app_gemini_model') || 'gemini-3.8-flash';
     let configuredSupermarkets = (localStorage.getItem('app_supermarkets') || 'Angeloni, Giassi').split(',').map(s => s.trim()).filter(Boolean);
+
+    const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
     function initApp() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -1122,6 +1193,7 @@
       document.getElementById('roomDisplay').innerText = `Sala: ${currentRoom}`;
       document.getElementById('roomInput').value = currentRoom;
       document.getElementById('geminiApiKeyInput').value = geminiApiKey;
+      document.getElementById('geminiModelInput').value = geminiModel;
       document.getElementById('supermarketsInput').value = configuredSupermarkets.join(', ');
 
       loadLocalData();
@@ -1132,6 +1204,12 @@
       renderCatalog();
       renderList();
       updateHeaderProgress();
+    }
+
+    function getItemKey(item) {
+      const name = (item.name || '').toLowerCase().trim();
+      const comment = (item.comment || '').toLowerCase().trim();
+      return `${name}::${comment}`;
     }
 
     function normalizeCatalogItems(items) {
@@ -1187,11 +1265,15 @@
 
       const localList = localStorage.getItem(`list_${currentRoom}`);
       itemsList = localList ? JSON.parse(localList) : [];
+
+      const localCache = localStorage.getItem(`priceCache_${currentRoom}`);
+      priceCache = localCache ? JSON.parse(localCache) : {};
     }
 
     function saveLocalData() {
       localStorage.setItem(`catalog_${currentRoom}`, JSON.stringify(catalogCategories));
       localStorage.setItem(`list_${currentRoom}`, JSON.stringify(itemsList));
+      localStorage.setItem(`priceCache_${currentRoom}`, JSON.stringify(priceCache));
     }
 
     function setupFirebaseSync() {
@@ -1229,6 +1311,7 @@
           if (data) {
             itemsList = data.list || [];
             catalogCategories = mergeCatalog(data.catalog);
+            priceCache = data.priceCache || {};
 
             saveLocalData();
             populateCategorySelect();
@@ -1255,13 +1338,14 @@
       saveLocalData();
 
       if (window.appChannel) {
-        window.appChannel.postMessage({ type: 'sync', room: currentRoom, itemsList, catalogCategories });
+        window.appChannel.postMessage({ type: 'sync', room: currentRoom, itemsList, catalogCategories, priceCache });
       }
 
       if (activeFirebaseRef && firebase.apps.length) {
         activeFirebaseRef.set({
           list: itemsList,
           catalog: catalogCategories,
+          priceCache: priceCache,
           updatedAt: Date.now()
         }).catch(err => console.error("Erro ao salvar:", err));
       }
@@ -1274,6 +1358,7 @@
           if (event.data && event.data.room === currentRoom) {
             itemsList = event.data.itemsList;
             catalogCategories = mergeCatalog(event.data.catalogCategories);
+            priceCache = event.data.priceCache || {};
             saveLocalData();
             populateCategorySelect();
             renderCatalog();
@@ -1739,11 +1824,24 @@
       geminiApiKey = document.getElementById('geminiApiKeyInput').value.trim();
       localStorage.setItem('app_gemini_key', geminiApiKey);
 
+      geminiModel = document.getElementById('geminiModelInput').value;
+      localStorage.setItem('app_gemini_model', geminiModel);
+
       const marketsRaw = document.getElementById('supermarketsInput').value.trim();
-      configuredSupermarkets = marketsRaw ? marketsRaw.split(',').map(s => s.trim()).filter(Boolean) : ['Angeloni', 'Giassi'];
+      const newMarkets = marketsRaw ? marketsRaw.split(',').map(s => s.trim()).filter(Boolean) : ['Angeloni', 'Giassi'];
+      
+      // Se novos mercados forem adicionados que não estavam na lista anterior, invalida o cache
+      const addedNewMarket = newMarkets.some(m => !configuredSupermarkets.includes(m));
+      if (addedNewMarket) {
+        priceCache = {};
+        localStorage.removeItem(`priceCache_${currentRoom}`);
+      }
+
+      configuredSupermarkets = newMarkets;
       localStorage.setItem('app_supermarkets', configuredSupermarkets.join(', '));
 
-      alert('Configurações salvas!');
+      syncToCloud();
+      alert(addedNewMarket ? 'Novos supermercados adicionados! O cache de preços foi resetado para incluir o novo mercado.' : 'Configurações salvas!');
       closeConfigModal();
     }
 
@@ -1762,6 +1860,73 @@
       window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     }
 
+    function generateAndCopyAIPrompt() {
+      if (itemsList.length === 0) {
+        return alert('Sua lista de compras está vazia! Adicione itens antes de gerar o prompt.');
+      }
+
+      const marketsListStr = configuredSupermarkets.join(', ');
+      
+      const itemsFormatted = itemsList.map(item => {
+        const spec = item.comment ? ` (Marca/Especificação: ${item.comment})` : '';
+        return `- ${item.qty}x ${item.name}${spec}`;
+      }).join('\n');
+
+      const promptText = `Atue como um pesquisador factual de preços de supermercado em Joinville/SC, Brasil.
+Por favor, pesquise na web (Google e especificamente nos e-commerces/folhetos de Joinville/SC como giassi.com.br e super.angeloni.com.br) os preços atuais HOJE dos seguintes itens para os supermercados: ${marketsListStr}.
+
+LISTA DE COMPRAS:
+${itemsFormatted}
+
+REGRAS CRÍTICAS DE PESQUISA:
+1. Monte uma tabela comparativa contendo:
+   - Nome do Produto e Quantidade
+   - Preço Unitário e Preço Total (Quantidade × Unitário) para cada mercado (${marketsListStr})
+   - Marca/Produto exato encontrado na busca para cada mercado
+2. PRIORIZE O MENOR PREÇO FINAL EM OFERTA/PROMOÇÃO/CLUBE: Se houver variação "De R$ X" por "R$ Y", capture obrigatoriamente o MENOR VALOR (R$ Y).
+3. Pesquise diretamente nas páginas dos e-commerces locais para evitar preços desatualizados.
+4. No final da tabela, inclua uma linha com o CUSTO TOTAL DA CESTA COMPLETA em cada mercado.
+5. Forneça uma seção de "CESTA OTIMIZADA" mostrando em qual mercado comprar cada item para obter o menor valor total somado e a economia total em R$.`;
+
+      document.getElementById('promptTextArea').value = promptText;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(promptText).then(() => {
+            alert('Prompt copiado com sucesso para a área de transferência!\n\nAgora você pode colá-lo no ChatGPT, Gemini, Claude ou Perplexity.');
+          }).catch(() => {
+            openPromptModal();
+          });
+        } else {
+          openPromptModal();
+        }
+      } catch (err) {
+        openPromptModal();
+      }
+    }
+
+    function openPromptModal() {
+      document.getElementById('promptModal').classList.add('active');
+    }
+
+    function closePromptModal() {
+      document.getElementById('promptModal').classList.remove('active');
+    }
+
+    function copyPromptTextFromModal() {
+      const textarea = document.getElementById('promptTextArea');
+      textarea.select();
+      textarea.setSelectionRange(0, 99999);
+      
+      try {
+        document.execCommand('copy');
+        alert('Prompt copiado para a área de transferência!');
+        closePromptModal();
+      } catch (err) {
+        prompt('Copie o texto do prompt abaixo:', textarea.value);
+      }
+    }
+
     async function fetchPricesOnDemand() {
       if (itemsList.length === 0) {
         return alert('Sua lista de compras está vazia! Adicione itens antes de comparar preços.');
@@ -1770,60 +1935,112 @@
       document.getElementById('compareResults').style.display = 'none';
       document.getElementById('compareLoading').style.display = 'block';
 
-      try {
-        let results = [];
-        if (geminiApiKey) {
-          results = await callGeminiPriceAPI(itemsList);
+      const forceRefresh = document.getElementById('forceRefreshToggle').checked;
+      const now = Date.now();
+
+      const cachedResults = [];
+      const uncachedItems = [];
+
+      itemsList.forEach(item => {
+        const key = getItemKey(item);
+        const cachedEntry = priceCache[key];
+
+        // Verifica se todas as lojas configuradas possuem dados no cache de 24h
+        const hasAllMarketsInCache = cachedEntry && cachedEntry.markets && configuredSupermarkets.every(m => m in cachedEntry.markets);
+
+        if (!forceRefresh && hasAllMarketsInCache && (now - cachedEntry.timestamp < CACHE_TTL_MS)) {
+          cachedResults.push({
+            id: item.id,
+            name: item.name,
+            comment: item.comment,
+            qty: item.qty,
+            isFromCache: true,
+            cacheAgeHours: Math.round((now - cachedEntry.timestamp) / (1000 * 60 * 60)),
+            markets: cachedEntry.markets
+          });
         } else {
-          await new Promise(r => setTimeout(r, 800));
-          results = generateMockPrices(itemsList);
+          uncachedItems.push(item);
+        }
+      });
+
+      try {
+        let freshResults = [];
+        let groundingUsed = false;
+
+        if (uncachedItems.length > 0) {
+          if (geminiApiKey) {
+            document.getElementById('loadingTitle').innerText = `Cotando ${uncachedItems.length} item(ns) via Gemini API + Google Search...`;
+            const apiResponse = await callGeminiPriceAPIStrictGrounding(uncachedItems);
+            freshResults = apiResponse.results;
+            groundingUsed = apiResponse.groundingUsed;
+          } else {
+            await new Promise(r => setTimeout(r, 600));
+            freshResults = generateMockPrices(uncachedItems);
+            groundingUsed = false;
+          }
+
+          freshResults.forEach(res => {
+            const originalItem = uncachedItems.find(i => i.id === res.id) || res;
+            const key = getItemKey(originalItem);
+            
+            priceCache[key] = {
+              timestamp: now,
+              markets: res.markets
+            };
+          });
+
+          syncToCloud();
+        } else {
+          groundingUsed = true;
         }
 
-        renderComparisonMatrix(results);
+        const combinedResults = [...cachedResults, ...freshResults];
+        renderComparisonMatrix(combinedResults, groundingUsed, uncachedItems.length, cachedResults.length);
       } catch (e) {
         console.error("Erro Gemini:", e);
-        alert('Ocorreu um erro ao consultar a API do Gemini 3.8 Flash. Gerando estimativa local.');
+        alert(`Ocorreu um erro ao consultar a API do Gemini (${geminiModel}). Utilizando estimativa local.`);
         const fallbackResults = generateMockPrices(itemsList);
-        renderComparisonMatrix(fallbackResults);
+        renderComparisonMatrix(fallbackResults, false, itemsList.length, 0);
       } finally {
         document.getElementById('compareLoading').style.display = 'none';
       }
     }
 
-    async function callGeminiPriceAPI(list) {
+    async function callGeminiPriceAPIStrictGrounding(list) {
       const marketsListStr = configuredSupermarkets.join(', ');
       
       const promptList = list.map(item => 
-        `- [ID: ${item.id}] ${item.name} (Qtd: ${item.qty}) ${item.comment ? 'Especificação/Obs: ' + item.comment : ''}`
+        `ID:${item.id}|Produto:${item.name}${item.comment ? '|Especificacao:' + item.comment : ''}`
       ).join('\n');
 
-      const systemPrompt = `Você é um assistente especialista em cotações de supermercado na cidade de Joinville, Santa Catarina, Brasil.
-Sua tarefa é consultar os preços UNITÁRIOS atuais dos produtos nos seguintes supermercados: ${marketsListStr}.
+      const systemPrompt = `Você é um robô pesquisador de preços extremamente factual em Joinville/SC, Brasil.
+Sua missão é pesquisar no Google Search o MENOR PREÇO UNITÁRIO REAL HOJE para os supermercados (${marketsListStr}).
 
-Para cada produto retorne obrigatoriamente um objeto com a chave "markets" contendo os preços e descrições encontradas para cada mercado.
+DIRETRIZES RÍGIDAS DE NAVEGAÇÃO E PREÇOS:
+1. PESQUISE PREFERENCIALMENTE NOS DOMÍNIOS DE E-COMMERCE LOCAIS DE JOINVILLE/SC (Exemplo: giassi.com.br, super.angeloni.com.br).
+2. EXTRAIA SEMPRE O MENOR PREÇO FINAL EM OFERTA / PROMOÇÃO / CLUBE. Se um produto custa "De R$ 25,98 Por R$ 17,98", retorne OBRIGATORIAMENTE 17.98.
+3. Se não encontrar o produto no e-commerce do mercado, retorne "p": null e "m": "Não encontrado".
 
-Retorne APENAS um JSON válido na seguinte estrutura:
+Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JSON):
 {
-  "cotacao": [
-    {
-      "itemId": "id_do_item",
-      "nome": "Nome do item",
-      "markets": {
-        ${configuredSupermarkets.map(m => `"${m}": { "unitPrice": 0.00, "foundItem": "Nome encontrado no ${m}" }`).join(',\n        ')}
-      }
+  "c": {
+    "ID_ITEM": {
+      "${configuredSupermarkets[0] || 'Angeloni'}": { "p": 0.00, "m": "Nome Exato Encontrado no Site" }${configuredSupermarkets.length > 1 ? `,
+      "${configuredSupermarkets[1] || 'Giassi'}": { "p": 0.00, "m": "Nome Exato Encontrado no Site" }` : ''}
     }
-  ]
+  }
 }`;
 
-      const userPrompt = `Pesquise os preços unitários nos supermercados (${marketsListStr}) para esta lista:\n${promptList}`;
+      const userPrompt = `Consulte no Google os menores preços de promoção atualizados em Joinville/SC para os mercados (${marketsListStr}):\n${promptList}`;
 
       const payload = {
         contents: [{ parts: [{ text: userPrompt }] }],
         systemInstruction: { parts: [{ text: systemPrompt }] },
-        tools: [{ "google_search": {} }]
+        tools: [{ "google_search": {} }, { "googleSearch": {} }]
       };
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiApiKey}`;
+      const selectedModel = geminiModel || 'gemini-3.8-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${geminiApiKey}`;
 
       let response = await fetch(url, {
         method: 'POST',
@@ -1845,33 +2062,42 @@ Retorne APENAS um JSON válido na seguinte estrutura:
       }
 
       const data = await response.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const candidate = data.candidates?.[0];
+      const rawText = candidate?.content?.parts?.[0]?.text || '';
+
+      const groundingMetadata = candidate?.groundingMetadata;
+      const hasGrounding = !!(groundingMetadata && groundingMetadata.groundingAttributions && groundingMetadata.groundingAttributions.length > 0);
 
       let cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanJson);
+      const cotacaoMap = parsed.c || parsed.cotacao || {};
 
-      return (parsed.cotacao || []).map(entry => {
-        const originalItem = list.find(i => i.id === entry.itemId || i.name.toLowerCase() === entry.nome?.toLowerCase()) || {};
-        const qty = originalItem.qty || 1;
+      const results = list.map(item => {
+        const entry = cotacaoMap[item.id] || {};
 
         const marketsData = {};
         configuredSupermarkets.forEach(m => {
-          const mData = entry.markets?.[m] || {};
-          const unitPrice = parseFloat(mData.unitPrice) || 5.00;
+          const mData = entry[m] || {};
+          const unitPrice = mData.p !== undefined && mData.p !== null ? parseFloat(mData.p) : (mData.unitPrice !== undefined ? parseFloat(mData.unitPrice) : null);
+          const foundName = mData.m || mData.foundItem || (unitPrice !== null ? item.name : 'Não encontrado');
+
           marketsData[m] = {
             unitPrice: unitPrice,
-            foundItem: mData.foundItem || originalItem.name,
-            totalPrice: unitPrice * qty
+            foundItem: unitPrice !== null ? foundName : 'Não encontrado',
+            totalPrice: unitPrice !== null ? unitPrice * item.qty : null
           };
         });
 
         return {
-          id: originalItem.id || entry.itemId,
-          name: originalItem.name || entry.nome,
-          qty: qty,
+          id: item.id,
+          name: item.name,
+          qty: item.qty,
+          isFromCache: false,
           markets: marketsData
         };
       });
+
+      return { results, groundingUsed: hasGrounding };
     }
 
     function generateMockPrices(list) {
@@ -1884,7 +2110,7 @@ Retorne APENAS um JSON válido na seguinte estrutura:
           const unitPrice = parseFloat((base + (Math.random() * 3 - 1.5)).toFixed(2));
           marketsData[m] = {
             unitPrice: unitPrice,
-            foundItem: `${item.name}${brandSpec} - ${m}`,
+            foundItem: `${item.name}${brandSpec}`,
             totalPrice: parseFloat((unitPrice * item.qty).toFixed(2))
           };
         });
@@ -1893,16 +2119,201 @@ Retorne APENAS um JSON válido na seguinte estrutura:
           id: item.id,
           name: item.name,
           qty: item.qty,
+          isFromCache: false,
           markets: marketsData
         };
       });
     }
 
-    function renderComparisonMatrix(results) {
+    function renderComparisonMatrix(results, groundingUsed = true, freshCount = 0, cacheCount = 0) {
       const table = document.querySelector('.compare-table');
       if (!table) return;
 
+      const badge = document.getElementById('groundingBadge');
+      const badgeText = document.getElementById('groundingText');
+
+      if (cacheCount > 0 && freshCount > 0) {
+        badge.className = 'grounding-status info';
+        badgeText.innerText = `Cotação Mista: ${cacheCount} item(ns) do Cache 24h + ${freshCount} item(ns) consultados no Gemini.`;
+      } else if (cacheCount > 0 && freshCount === 0) {
+        badge.className = 'grounding-status info';
+        badgeText.innerText = `100% reutilizado do Cache de 24h (${cacheCount} itens sem consumir tokens).`;
+      } else if (groundingUsed) {
+        badge.className = 'grounding-status success';
+        badgeText.innerText = 'Preços em promoção factualizados via Google Search (E-commerces & Encartes de Joinville)';
+      } else {
+        badge.className = 'grounding-status warning';
+        badgeText.innerText = 'Modo Simulação ou Busca direta sem metadados de Grounding';
+      }
+
       const markets = configuredSupermarkets.length ? configuredSupermarkets : ['Angeloni', 'Giassi'];
+
+      const totalsByMarket = {};
+      markets.forEach(m => totalsByMarket[m] = 0);
+
+      const splitByMarket = {};
+      markets.forEach(m => splitByMarket[m] = []);
+
+      let optimizedSum = 0;
+      const optimizedItems = [];
+
+      results.forEach(res => {
+        let cheapestMarket = null;
+        let cheapestVal = Infinity;
+        let cheapestUnitPrice = 0;
+        let cheapestFoundName = '';
+
+        markets.forEach(m => {
+          const mData = res.markets?.[m];
+          if (mData && mData.totalPrice !== null) {
+            totalsByMarket[m] += mData.totalPrice;
+
+            if (mData.totalPrice < cheapestVal) {
+              cheapestVal = mData.totalPrice;
+              cheapestMarket = m;
+              cheapestUnitPrice = mData.unitPrice;
+              cheapestFoundName = mData.foundItem;
+            }
+          }
+        });
+
+        if (cheapestMarket && cheapestVal !== Infinity) {
+          optimizedSum += cheapestVal;
+          splitByMarket[cheapestMarket].push(`• ${res.name} (${res.qty}un) - R$ ${cheapestVal.toFixed(2)}`);
+          optimizedItems.push({
+            name: res.name,
+            qty: res.qty,
+            market: cheapestMarket,
+            totalPrice: cheapestVal,
+            unitPrice: cheapestUnitPrice,
+            foundItem: cheapestFoundName
+          });
+        }
+      });
+
+      const basketListContainer = document.getElementById('sortedBasketList');
+      basketListContainer.innerHTML = '';
+
+      const summaryOptions = [];
+
+      summaryOptions.push({
+        id: 'opt_cesta_otimizada',
+        title: 'Cesta Otimizada',
+        total: optimizedSum,
+        type: 'optimized',
+        items: optimizedItems
+      });
+
+      markets.forEach(m => {
+        const mItems = results.map(res => {
+          const mData = res.markets?.[m] || {};
+          return {
+            name: res.name,
+            qty: res.qty,
+            unitPrice: mData.unitPrice,
+            totalPrice: mData.totalPrice,
+            foundItem: mData.foundItem || 'Não encontrado'
+          };
+        });
+
+        summaryOptions.push({
+          id: `opt_market_${m.replace(/\s+/g, '_')}`,
+          title: m,
+          total: totalsByMarket[m],
+          type: 'market',
+          items: mItems
+        });
+      });
+
+      summaryOptions.sort((a, b) => {
+        if (a.total === 0) return 1;
+        if (b.total === 0) return -1;
+        return a.total - b.total;
+      });
+
+      summaryOptions.forEach(opt => {
+        const card = document.createElement('div');
+        card.style.cssText = `
+          background-color: #10b981;
+          color: #ffffff;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          transition: all 0.2s ease;
+        `;
+
+        const header = document.createElement('div');
+        header.style.cssText = `
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          cursor: pointer;
+          font-weight: 700;
+          font-size: 1.15rem;
+          user-select: none;
+        `;
+
+        header.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-chevron-down arrow-indicator" style="font-size: 0.9rem; transition: transform 0.2s;"></i>
+            <span>${escapeHTML(opt.title)}</span>
+          </div>
+          <span style="font-weight: 800; font-size: 1.25rem;">R$ ${opt.total.toFixed(2).replace('.', ',')}</span>
+        `;
+
+        const detailsContent = document.createElement('div');
+        detailsContent.style.cssText = `
+          display: none;
+          background-color: #047857;
+          padding: 14px 18px;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          font-size: 0.85rem;
+        `;
+
+        let listHTML = `<ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">`;
+        opt.items.forEach(item => {
+          if (opt.type === 'optimized') {
+            listHTML += `
+              <li style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
+                <div>
+                  <div style="font-weight: 700;">${escapeHTML(item.name)} <span style="font-weight: 400; font-size: 0.78rem;">(${item.qty}un)</span></div>
+                  <div style="font-size: 0.75rem; color: #a7f3d0;"><i class="fa-solid fa-store" style="margin-right: 4px;"></i>${escapeHTML(item.market)} - ${escapeHTML(item.foundItem)}</div>
+                </div>
+                <div style="font-weight: 800; text-align: right; min-width: 70px;">
+                  R$ ${item.totalPrice.toFixed(2).replace('.', ',')}
+                </div>
+              </li>
+            `;
+          } else {
+            const hasPrice = item.totalPrice !== null && item.totalPrice !== undefined;
+            listHTML += `
+              <li style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
+                <div>
+                  <div style="font-weight: 700;">${escapeHTML(item.name)} <span style="font-weight: 400; font-size: 0.78rem;">(${item.qty}un)</span></div>
+                  <div style="font-size: 0.75rem; color: #a7f3d0;">${escapeHTML(item.foundItem)}</div>
+                </div>
+                <div style="font-weight: 800; text-align: right; min-width: 70px;">
+                  ${hasPrice ? `R$ ${item.totalPrice.toFixed(2).replace('.', ',')}` : 'N/D'}
+                </div>
+              </li>
+            `;
+          }
+        });
+        listHTML += `</ul>`;
+        detailsContent.innerHTML = listHTML;
+
+        header.onclick = () => {
+          const isOpen = detailsContent.style.display === 'block';
+          detailsContent.style.display = isOpen ? 'none' : 'block';
+          const arrow = header.querySelector('.arrow-indicator');
+          if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        };
+
+        card.appendChild(header);
+        card.appendChild(detailsContent);
+        basketListContainer.appendChild(card);
+      });
 
       let theadHTML = `<thead><tr><th style="text-align: left;">Item (Qtd)</th>`;
       markets.forEach(m => {
@@ -1911,45 +2322,50 @@ Retorne APENAS um JSON válido na seguinte estrutura:
       theadHTML += `</tr></thead>`;
 
       let tbodyHTML = `<tbody>`;
-      const totalsByMarket = {};
-      markets.forEach(m => totalsByMarket[m] = 0);
-
-      const splitByMarket = {};
-      markets.forEach(m => splitByMarket[m] = []);
-
-      let optimizedSum = 0;
 
       results.forEach(res => {
-        let cheapestMarket = markets[0];
+        let cheapestMarket = null;
         let cheapestVal = Infinity;
 
         markets.forEach(m => {
-          const mTotal = res.markets?.[m]?.totalPrice || 0;
-          totalsByMarket[m] += mTotal;
-
-          if (mTotal < cheapestVal) {
-            cheapestVal = mTotal;
-            cheapestMarket = m;
+          const mData = res.markets?.[m];
+          if (mData && mData.totalPrice !== null) {
+            if (mData.totalPrice < cheapestVal) {
+              cheapestVal = mData.totalPrice;
+              cheapestMarket = m;
+            }
           }
         });
 
-        optimizedSum += cheapestVal;
-        splitByMarket[cheapestMarket].push(`• ${res.name} (${res.qty}un) - R$ ${cheapestVal.toFixed(2)}`);
-
-        tbodyHTML += `<tr><td class="item-cell"><div>${escapeHTML(res.name)}</div><div style="font-size:0.75rem; color:var(--text-muted);">${res.qty} un × Unid</div></td>`;
+        tbodyHTML += `
+          <tr>
+            <td class="item-cell">
+              <div>${escapeHTML(res.name)} ${res.isFromCache ? '<span class="cached-badge"><i class="fa-solid fa-clock-rotate-left"></i> 24h</span>' : ''}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${res.qty} un × Unid</div>
+            </td>
+        `;
 
         markets.forEach(m => {
-          const mData = res.markets?.[m] || { totalPrice: 0, unitPrice: 0, foundItem: '' };
-          const isCheapest = m === cheapestMarket;
+          const mData = res.markets?.[m] || { totalPrice: null, unitPrice: null, foundItem: 'Não disponível' };
+          const isCheapest = m === cheapestMarket && mData.totalPrice !== null;
 
-          tbodyHTML += `
-            <td style="${isCheapest ? 'background:#ecfdf5; font-weight:bold; color:#065f46;' : ''}">
-              <div>R$ ${mData.totalPrice.toFixed(2)}</div>
-              <div style="font-size: 0.72rem; color: #475569; margin-top:2px;">(Un: R$ ${mData.unitPrice.toFixed(2)})</div>
-              <div class="found-product-detail">${escapeHTML(mData.foundItem || '')}</div>
-              ${isCheapest ? '<span class="cheapest-badge"><i class="fa-solid fa-check"></i> Menor</span>' : ''}
-            </td>
-          `;
+          if (mData.totalPrice !== null) {
+            tbodyHTML += `
+              <td style="${isCheapest ? 'background:#ecfdf5; font-weight:bold; color:#065f46;' : ''}">
+                <div>R$ ${mData.totalPrice.toFixed(2)}</div>
+                <div style="font-size: 0.72rem; color: #475569; margin-top:2px;">(Un: R$ ${mData.unitPrice.toFixed(2)})</div>
+                <div class="found-product-detail">${escapeHTML(mData.foundItem || '')}</div>
+                ${isCheapest ? '<span class="cheapest-badge"><i class="fa-solid fa-check"></i> Menor</span>' : ''}
+              </td>
+            `;
+          } else {
+            tbodyHTML += `
+              <td style="color: var(--text-muted); font-size: 0.78rem;">
+                <div>N/D</div>
+                <div class="found-product-detail">Não encontrado na busca</div>
+              </td>
+            `;
+          }
         });
 
         tbodyHTML += `</tr>`;
@@ -1964,38 +2380,6 @@ Retorne APENAS um JSON válido na seguinte estrutura:
       tfootHTML += `</tr></tfoot>`;
 
       table.innerHTML = theadHTML + tbodyHTML + tfootHTML;
-
-      document.getElementById('optimizedTotalVal').textContent = `R$ ${optimizedSum.toFixed(2)}`;
-      
-      const singleStoreTotals = Object.values(totalsByMarket);
-      const singleStoreBest = Math.min(...singleStoreTotals);
-      const savings = singleStoreBest - optimizedSum;
-      document.getElementById('optimizedSavingsVal').textContent = `R$ ${savings.toFixed(2)}`;
-
-      let splitGrid = document.getElementById('marketsSplitGrid');
-
-      if (!splitGrid) {
-        splitGrid = document.createElement('div');
-        splitGrid.id = 'marketsSplitGrid';
-        splitGrid.style.cssText = 'grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); display: grid; gap: 10px; margin-top: 12px;';
-        const parentCard = document.getElementById('optimizedTotalVal').closest('div').parentElement;
-        parentCard.appendChild(splitGrid);
-      }
-
-      splitGrid.innerHTML = '';
-      markets.forEach(m => {
-        const items = splitByMarket[m];
-        const box = document.createElement('div');
-        box.style.cssText = 'background: rgba(255,255,255,0.08); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);';
-        box.innerHTML = `
-          <div style="font-weight: 700; font-size: 0.78rem; color: #a7f3d0; margin-bottom: 4px; text-transform: uppercase;">${escapeHTML(m)}:</div>
-          <ul style="font-size: 0.75rem; space-y: 2px; list-style: none;">
-            ${items.length ? items.map(i => `<li>${escapeHTML(i)}</li>`).join('') : '<li style="opacity:0.6;">Nenhum item</li>'}
-          </ul>
-        `;
-        splitGrid.appendChild(box);
-      });
-
       document.getElementById('compareResults').style.display = 'block';
     }
 
