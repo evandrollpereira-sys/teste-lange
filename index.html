@@ -714,7 +714,7 @@
 <body>
 
   <!-- LOCKSCREEN / MODAL DE LOGIN E AUTENTICAÇÃO -->
-  <div class="modal-overlay active" id="lockscreenModal" style="z-index: 300; background: rgba(15, 23, 42, 0.95);">
+  <div class="modal-overlay" id="lockscreenModal" style="z-index: 300; background: rgba(15, 23, 42, 0.95);">
     <div class="modal" style="max-width: 400px; text-align: center; padding: 28px 20px;">
       <div style="margin-bottom: 16px;">
         <span class="material-icons-outlined" style="font-size: 3.5rem; color: var(--primary);">lock</span>
@@ -738,7 +738,7 @@
         Usuário ou PIN incorretos ou conta inativa!
       </div>
 
-      <button class="btn btn-primary" onclick="performLogin()" style="font-size: 1.05rem;">
+      <button class="btn btn-primary" id="btnLoginSubmit" onclick="performLogin()" style="font-size: 1.05rem;">
         <span class="material-icons-outlined">key</span> Entrar no App
       </button>
     </div>
@@ -833,7 +833,7 @@
       <div id="compareLoading" style="display: none; text-align: center; padding: 30px 20px; background: #fff; border-radius: var(--radius); border: 1px solid var(--border);">
         <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
         <p id="loadingTitle" style="font-weight: 700; font-size: 0.95rem; color: var(--text);">Pesquisando preços reais em Joinville via Google Search...</p>
-        <p id="loadingSub" style="font-size: 0.8rem; color: var(--text-muted);">Consultando apenas itens não cotados nas últimas 24 horas</p>
+        <p id="loadingSub" style="font-size: 0.8rem; color: var(--text-muted);">Consultando apenas itens/mercados não cotados nas últimas 24 horas</p>
       </div>
 
       <!-- Results Container -->
@@ -1219,7 +1219,6 @@
     const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
     function initApp() {
-      // Inicializa Firebase SDK
       if (!firebase.apps.length) {
         firebase.initializeApp(DEFAULT_FIREBASE_CONFIG);
       }
@@ -1230,6 +1229,8 @@
       if (savedUser && savedRoom) {
         currentUser = savedUser;
         currentRoom = savedRoom;
+        currentGroupName = localStorage.getItem('app_group_name') || savedRoom;
+        
         document.getElementById('lockscreenModal').classList.remove('active');
         startSession();
       } else {
@@ -1241,6 +1242,7 @@
       const userRaw = document.getElementById('loginUserInput').value.trim().toUpperCase();
       const pinRaw = document.getElementById('loginPinInput').value.trim();
       const errEl = document.getElementById('loginErrorMsg');
+      const btnSubmit = document.getElementById('btnLoginSubmit');
 
       if (!userRaw || !pinRaw) {
         errEl.innerText = "Informe o Usuário e o PIN!";
@@ -1249,6 +1251,8 @@
       }
 
       errEl.style.display = "none";
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = "Verificando...";
 
       try {
         const db = firebase.database();
@@ -1258,6 +1262,8 @@
         if (!userData || userData.ativo === false || String(userData.pin).trim() !== pinRaw) {
           errEl.innerText = "Usuário ou PIN incorretos ou conta desativada!";
           errEl.style.display = "block";
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = `<span class="material-icons-outlined">key</span> Entrar no App`;
           return;
         }
 
@@ -1270,20 +1276,27 @@
         localStorage.setItem('app_group_name', currentGroupName);
 
         document.getElementById('lockscreenModal').classList.remove('active');
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = `<span class="material-icons-outlined">key</span> Entrar no App`;
+
         startSession();
 
       } catch (e) {
         console.error("Erro na autenticação:", e);
         errEl.innerText = "Erro ao conectar ao servidor. Tente novamente.";
         errEl.style.display = "block";
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = `<span class="material-icons-outlined">key</span> Entrar no App`;
       }
     }
 
     function logoutSession() {
-      localStorage.removeItem('app_user_name');
-      localStorage.removeItem('app_firebase_room');
-      localStorage.removeItem('app_group_name');
-      location.reload();
+      if (confirm("Deseja realmente desconectar e sair da sua conta neste dispositivo?")) {
+        localStorage.removeItem('app_user_name');
+        localStorage.removeItem('app_firebase_room');
+        localStorage.removeItem('app_group_name');
+        location.reload();
+      }
     }
 
     function startSession() {
@@ -1884,17 +1897,11 @@
       const marketsRaw = document.getElementById('supermarketsInput').value.trim();
       const newMarkets = marketsRaw ? marketsRaw.split(',').map(s => s.trim()).filter(Boolean) : ['Angeloni', 'Giassi'];
       
-      const addedNewMarket = newMarkets.some(m => !configuredSupermarkets.includes(m));
-      if (addedNewMarket) {
-        priceCache = {};
-        localStorage.removeItem(`priceCache_${currentRoom}`);
-      }
-
       configuredSupermarkets = newMarkets;
       localStorage.setItem('app_supermarkets', configuredSupermarkets.join(', '));
 
       syncToCloud();
-      alert(addedNewMarket ? 'Novos supermercados adicionados! O cache de preços foi resetado.' : 'Configurações salvas!');
+      alert('Configurações salvas!');
       closeConfigModal();
     }
 
@@ -1991,63 +1998,142 @@ REGRAS CRÍTICAS DE PESQUISA:
       const forceRefresh = document.getElementById('forceRefreshToggle').checked;
       const now = Date.now();
 
-      const cachedResults = [];
-      const uncachedItems = [];
+      // Estrutura compilada com os resultados finais por produto
+      const compiledResultsMap = {};
+      
+      // Mapeia para cada produto quais mercados necessitam de cotação fresca
+      const itemsToFetchByMarket = [];
 
       itemsList.forEach(item => {
         const key = getItemKey(item);
-        const cachedEntry = priceCache[key];
+        const cachedEntry = priceCache[key] || {};
+        const cachedMarkets = cachedEntry.markets || {};
 
-        const hasAllMarketsInCache = cachedEntry && cachedEntry.markets && configuredSupermarkets.every(m => m in cachedEntry.markets);
+        compiledResultsMap[item.id] = {
+          id: item.id,
+          name: item.name,
+          qty: item.qty,
+          comment: item.comment,
+          markets: {}
+        };
 
-        if (!forceRefresh && hasAllMarketsInCache && (now - cachedEntry.timestamp < CACHE_TTL_MS)) {
-          cachedResults.push({
-            id: item.id,
-            name: item.name,
-            comment: item.comment,
-            qty: item.qty,
-            isFromCache: true,
-            cacheAgeHours: Math.round((now - cachedEntry.timestamp) / (1000 * 60 * 60)),
-            markets: cachedEntry.markets
+        const missingMarketsForItem = [];
+
+        configuredSupermarkets.forEach(m => {
+          const mCache = cachedMarkets[m];
+          const isMarketCached = mCache && mCache.unitPrice !== undefined && mCache.timestamp && (now - mCache.timestamp < CACHE_TTL_MS);
+
+          if (!forceRefresh && isMarketCached) {
+            compiledResultsMap[item.id].markets[m] = {
+              unitPrice: mCache.unitPrice,
+              foundItem: mCache.foundItem,
+              totalPrice: mCache.unitPrice !== null ? mCache.unitPrice * item.qty : null,
+              isFromCache: true
+            };
+          } else {
+            missingMarketsForItem.push(m);
+          }
+        });
+
+        if (missingMarketsForItem.length > 0) {
+          itemsToFetchByMarket.push({
+            item: item,
+            neededMarkets: missingMarketsForItem
           });
-        } else {
-          uncachedItems.push(item);
         }
       });
 
       try {
-        let freshResults = [];
+        let freshCount = itemsToFetchByMarket.length;
+        let totalCachedCells = 0;
+        let totalFreshCells = 0;
+
+        itemsList.forEach(item => {
+          configuredSupermarkets.forEach(m => {
+            if (compiledResultsMap[item.id].markets[m]) {
+              totalCachedCells++;
+            } else {
+              totalFreshCells++;
+            }
+          });
+        });
+
         let groundingUsed = false;
 
-        if (uncachedItems.length > 0) {
+        if (itemsToFetchByMarket.length > 0) {
           if (geminiApiKey) {
-            document.getElementById('loadingTitle').innerText = `Cotando ${uncachedItems.length} item(ns) via Gemini API + Google Search...`;
-            const apiResponse = await callGeminiPriceAPIStrictGrounding(uncachedItems);
-            freshResults = apiResponse.results;
+            document.getElementById('loadingTitle').innerText = `Cotando itens e mercados pendentes via Gemini API...`;
+            const apiResponse = await callGeminiPriceAPIStrictGrounding(itemsToFetchByMarket);
             groundingUsed = apiResponse.groundingUsed;
+
+            // Mescla os resultados novos no mapa geral e atualiza o priceCache
+            apiResponse.results.forEach(res => {
+              const itemObj = itemsList.find(i => i.id === res.id);
+              if (!itemObj) return;
+
+              const key = getItemKey(itemObj);
+              if (!priceCache[key]) {
+                priceCache[key] = { markets: {} };
+              }
+              if (!priceCache[key].markets) {
+                priceCache[key].markets = {};
+              }
+
+              Object.keys(res.markets).forEach(m => {
+                const mData = res.markets[m];
+                compiledResultsMap[res.id].markets[m] = {
+                  unitPrice: mData.unitPrice,
+                  foundItem: mData.foundItem,
+                  totalPrice: mData.unitPrice !== null ? mData.unitPrice * itemObj.qty : null,
+                  isFromCache: false
+                };
+
+                // Salva no cache com o timestamp específico deste mercado
+                priceCache[key].markets[m] = {
+                  unitPrice: mData.unitPrice,
+                  foundItem: mData.foundItem,
+                  timestamp: now
+                };
+              });
+            });
           } else {
             await new Promise(r => setTimeout(r, 600));
-            freshResults = generateMockPrices(uncachedItems);
+            const mockResults = generateMockPricesForNeededMarkets(itemsToFetchByMarket);
             groundingUsed = false;
-          }
 
-          freshResults.forEach(res => {
-            const originalItem = uncachedItems.find(i => i.id === res.id) || res;
-            const key = getItemKey(originalItem);
-            
-            priceCache[key] = {
-              timestamp: now,
-              markets: res.markets
-            };
-          });
+            mockResults.forEach(res => {
+              const itemObj = itemsList.find(i => i.id === res.id);
+              if (!itemObj) return;
+
+              const key = getItemKey(itemObj);
+              if (!priceCache[key]) priceCache[key] = { markets: {} };
+              if (!priceCache[key].markets) priceCache[key].markets = {};
+
+              Object.keys(res.markets).forEach(m => {
+                const mData = res.markets[m];
+                compiledResultsMap[res.id].markets[m] = {
+                  unitPrice: mData.unitPrice,
+                  foundItem: mData.foundItem,
+                  totalPrice: mData.unitPrice !== null ? mData.unitPrice * itemObj.qty : null,
+                  isFromCache: false
+                };
+
+                priceCache[key].markets[m] = {
+                  unitPrice: mData.unitPrice,
+                  foundItem: mData.foundItem,
+                  timestamp: now
+                };
+              });
+            });
+          }
 
           syncToCloud();
         } else {
           groundingUsed = true;
         }
 
-        const combinedResults = [...cachedResults, ...freshResults];
-        renderComparisonMatrix(combinedResults, groundingUsed, uncachedItems.length, cachedResults.length);
+        const combinedResults = Object.values(compiledResultsMap);
+        renderComparisonMatrix(combinedResults, groundingUsed, totalFreshCells, totalCachedCells);
       } catch (e) {
         console.error("Erro Gemini:", e);
         alert(`Ocorreu um erro ao consultar a API do Gemini (${geminiModel}). Utilizando estimativa local.`);
@@ -2058,32 +2144,29 @@ REGRAS CRÍTICAS DE PESQUISA:
       }
     }
 
-    async function callGeminiPriceAPIStrictGrounding(list) {
-      const marketsListStr = configuredSupermarkets.join(', ');
-      
-      const promptList = list.map(item => 
-        `ID:${item.id}|Produto:${item.name}${item.comment ? '|Especificacao:' + item.comment : ''}`
+    async function callGeminiPriceAPIStrictGrounding(itemsToFetch) {
+      const promptList = itemsToFetch.map(({ item, neededMarkets }) => 
+        `ID:${item.id}|Produto:${item.name}${item.comment ? '|Especificacao:' + item.comment : ''}|ConsultarMercados:${neededMarkets.join(',')}`
       ).join('\n');
 
       const systemPrompt = `Você é um robô pesquisador de preços extremamente factual em Joinville/SC, Brasil.
-Sua missão é pesquisar no Google Search o MENOR PREÇO UNITÁRIO REAL HOJE para os supermercados (${marketsListStr}).
+Sua missão é pesquisar no Google Search o MENOR PREÇO UNITÁRIO REAL HOJE para os supermercados solicitados por cada produto.
 
 DIRETRIZES RÍGIDAS DE NAVEGAÇÃO E PREÇOS:
 1. PESQUISE PREFERENCIALMENTE NOS DOMÍNIOS DE E-COMMERCE LOCAIS DE JOINVILLE/SC (Exemplo: giassi.com.br, super.angeloni.com.br).
 2. EXTRAIA SEMPRE O MENOR PREÇO FINAL EM OFERTA / PROMOÇÃO / CLUBE. Se um produto custa "De R$ 25,98 Por R$ 17,98", retorne OBRIGATORIAMENTE 17.98.
-3. Se não encontrar o produto no e-commerce do mercado, retorne "p": null e "m": "Não encontrado".
+3. Se não encontrar o produto no e-commerce do mercado solicitante, retorne "p": null e "m": "Não encontrado".
 
 Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JSON):
 {
   "c": {
     "ID_ITEM": {
-      "${configuredSupermarkets[0] || 'Angeloni'}": { "p": 0.00, "m": "Nome Exato Encontrado no Site" }${configuredSupermarkets.length > 1 ? `,
-      "${configuredSupermarkets[1] || 'Giassi'}": { "p": 0.00, "m": "Nome Exato Encontrado no Site" }` : ''}
+      "NomeDoMercado": { "p": 0.00, "m": "Nome Exato Encontrado no Site" }
     }
   }
 }`;
 
-      const userPrompt = `Consulte no Google os menores preços de promoção atualizados em Joinville/SC para os mercados (${marketsListStr}):\n${promptList}`;
+      const userPrompt = `Consulte no Google os menores preços de promoção atualizados em Joinville/SC conforme especificado por item e mercado:\n${promptList}`;
 
       const payload = {
         contents: [{ parts: [{ text: userPrompt }] }],
@@ -2124,11 +2207,11 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
       const parsed = JSON.parse(cleanJson);
       const cotacaoMap = parsed.c || parsed.cotacao || {};
 
-      const results = list.map(item => {
+      const results = itemsToFetch.map(({ item, neededMarkets }) => {
         const entry = cotacaoMap[item.id] || {};
 
         const marketsData = {};
-        configuredSupermarkets.forEach(m => {
+        neededMarkets.forEach(m => {
           const mData = entry[m] || {};
           const unitPrice = mData.p !== undefined && mData.p !== null ? parseFloat(mData.p) : (mData.unitPrice !== undefined ? parseFloat(mData.unitPrice) : null);
           const foundName = mData.m || mData.foundItem || (unitPrice !== null ? item.name : 'Não encontrado');
@@ -2144,12 +2227,35 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           id: item.id,
           name: item.name,
           qty: item.qty,
-          isFromCache: false,
           markets: marketsData
         };
       });
 
       return { results, groundingUsed: hasGrounding };
+    }
+
+    function generateMockPricesForNeededMarkets(itemsToFetch) {
+      return itemsToFetch.map(({ item, neededMarkets }) => {
+        const base = Math.floor(Math.random() * 15) + 4 + Math.random();
+        const brandSpec = item.comment ? ` (${item.comment})` : '';
+
+        const marketsData = {};
+        neededMarkets.forEach(m => {
+          const unitPrice = parseFloat((base + (Math.random() * 3 - 1.5)).toFixed(2));
+          marketsData[m] = {
+            unitPrice: unitPrice,
+            foundItem: `${item.name}${brandSpec}`,
+            totalPrice: parseFloat((unitPrice * item.qty).toFixed(2))
+          };
+        });
+
+        return {
+          id: item.id,
+          name: item.name,
+          qty: item.qty,
+          markets: marketsData
+        };
+      });
     }
 
     function generateMockPrices(list) {
@@ -2163,7 +2269,8 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           marketsData[m] = {
             unitPrice: unitPrice,
             foundItem: `${item.name}${brandSpec}`,
-            totalPrice: parseFloat((unitPrice * item.qty).toFixed(2))
+            totalPrice: parseFloat((unitPrice * item.qty).toFixed(2)),
+            isFromCache: false
           };
         });
 
@@ -2171,7 +2278,6 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           id: item.id,
           name: item.name,
           qty: item.qty,
-          isFromCache: false,
           markets: marketsData
         };
       });
@@ -2186,10 +2292,10 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
 
       if (cacheCount > 0 && freshCount > 0) {
         badge.className = 'grounding-status info';
-        badgeText.innerText = `Cotação Mista: ${cacheCount} item(ns) do Cache 24h + ${freshCount} item(ns) consultados no Gemini.`;
+        badgeText.innerText = `Cotação Mista: ${cacheCount} preço(s) vindos do Cache 24h + ${freshCount} consultado(s) em tempo real.`;
       } else if (cacheCount > 0 && freshCount === 0) {
         badge.className = 'grounding-status info';
-        badgeText.innerText = `100% reutilizado do Cache de 24h (${cacheCount} itens sem consumir tokens).`;
+        badgeText.innerText = `100% reutilizado do Cache de 24h (${cacheCount} cotações sem consumir tokens).`;
       } else if (groundingUsed) {
         badge.className = 'grounding-status success';
         badgeText.innerText = 'Preços em promoção factualizados via Google Search (E-commerces & Encartes de Joinville)';
@@ -2392,19 +2498,22 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
         tbodyHTML += `
           <tr>
             <td class="item-cell">
-              <div>${escapeHTML(res.name)} ${res.isFromCache ? '<span class="cached-badge"><i class="fa-solid fa-clock-rotate-left"></i> 24h</span>' : ''}</div>
+              <div>${escapeHTML(res.name)}</div>
               <div style="font-size:0.75rem; color:var(--text-muted);">${res.qty} un × Unid</div>
             </td>
         `;
 
         markets.forEach(m => {
-          const mData = res.markets?.[m] || { totalPrice: null, unitPrice: null, foundItem: 'Não disponível' };
+          const mData = res.markets?.[m] || { totalPrice: null, unitPrice: null, foundItem: 'Não disponível', isFromCache: false };
           const isCheapest = m === cheapestMarket && mData.totalPrice !== null;
 
           if (mData.totalPrice !== null) {
             tbodyHTML += `
               <td style="${isCheapest ? 'background:#ecfdf5; font-weight:bold; color:#065f46;' : ''}">
-                <div>R$ ${mData.totalPrice.toFixed(2)}</div>
+                <div>
+                  R$ ${mData.totalPrice.toFixed(2)}
+                  ${mData.isFromCache ? '<span class="cached-badge" style="margin-left:4px;"><i class="fa-solid fa-clock-rotate-left"></i> 24h</span>' : ''}
+                </div>
                 <div style="font-size: 0.72rem; color: #475569; margin-top:2px;">(Un: R$ ${mData.unitPrice.toFixed(2)})</div>
                 <div class="found-product-detail">${escapeHTML(mData.foundItem || '')}</div>
                 ${isCheapest ? '<span class="cheapest-badge"><i class="fa-solid fa-check"></i> Menor</span>' : ''}
