@@ -60,6 +60,36 @@
       padding-bottom: 95px;
     }
 
+    /* Tela de Bloqueio por PIN */
+    #pinLockScreen {
+      position: fixed;
+      inset: 0;
+      background: #0f172a;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .pin-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 16px;
+      padding: 28px 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .pin-input-field {
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 800;
+      text-align: center;
+      font-size: 1.25rem;
+    }
+
     header {
       position: sticky;
       top: 0;
@@ -595,6 +625,13 @@
       margin-top: 8px;
     }
 
+    .btn-danger {
+      background: var(--danger-light);
+      color: var(--danger);
+      border: 1px solid #fca5a5;
+      margin-top: 8px;
+    }
+
     .btn-whatsapp {
       background: #25D366;
       color: #fff;
@@ -713,6 +750,27 @@
 </head>
 <body>
 
+  <!-- TELA DE BLOQUEIO POR PIN -->
+  <div id="pinLockScreen">
+    <div class="pin-card">
+      <div style="width: 56px; height: 56px; background: #ecfdf5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <span class="material-icons-outlined" style="color: var(--primary); font-size: 2rem;">lock</span>
+      </div>
+      <h2 style="font-size: 1.3rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Autenticação por PIN</h2>
+      <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">Digite o PIN alfanumérico para acessar a sala de compras compartilhada.</p>
+      
+      <form onsubmit="submitPinForm(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <input type="text" id="lockPinInput" class="pin-input-field" placeholder="Ex: CASA12" autocomplete="off" autofocus maxlength="15">
+        </div>
+        <p id="pinErrorMsg" style="color: #ef4444; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px; display: none;"></p>
+        <button type="submit" class="btn btn-primary">
+          <span class="material-icons-outlined">vpn_key</span> Entrar na Sala
+        </button>
+      </form>
+    </div>
+  </div>
+
   <header>
     <div class="header-content">
       <div class="brand">
@@ -730,7 +788,7 @@
     <div class="sub-header">
       <div class="room-tag" onclick="openConfigModal()">
         <span class="material-icons-outlined" style="font-size: 1.1rem;">meeting_room</span>
-        <span id="roomDisplay">Sala: Padrão</span>
+        <span id="roomDisplay">Sala: -</span>
       </div>
       <div id="itemCounter">0/0 itens (0 un)</div>
     </div>
@@ -940,11 +998,12 @@
         <span class="material-icons-outlined" onclick="closeConfigModal()" style="cursor:pointer;">close</span>
       </div>
       <div class="form-group">
-        <label>Nome da Sala Compartilhada</label>
-        <input type="text" id="roomInput" placeholder="Ex: listacompras-voigtlange">
+        <label>PIN Alfanumérico Conectado</label>
+        <input type="text" id="roomInput" placeholder="Ex: CASA12" class="pin-input-field">
       </div>
-      <button class="btn btn-primary" onclick="changeRoom()">Conectar / Trocar Sala</button>
-      
+      <button class="btn btn-primary" onclick="changeRoom()">Trocar de PIN/Sala</button>
+      <button class="btn btn-danger" onclick="logoutPin()">Sair da Sala (Deslogar)</button>
+
       <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
 
       <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Supermercados Pesquisados</h4>
@@ -974,9 +1033,9 @@
       <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
 
       <div class="form-group">
-        <label>Compartilhar Sala</label>
+        <label>Compartilhar PIN / Sala</label>
         <button class="btn btn-secondary" onclick="copyShareLink()">
-          <span class="material-icons-outlined">content_copy</span> Copiar Link do App
+          <span class="material-icons-outlined">content_copy</span> Copiar Link com PIN
         </button>
         <button class="btn btn-whatsapp" onclick="shareWhatsApp()">
           <span class="material-icons-outlined">share</span> Enviar via WhatsApp
@@ -985,20 +1044,28 @@
 
       <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
 
-      <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Configuração Firebase</h4>
+      <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Configuração Firebase (Fixado)</h4>
       <div class="form-group">
         <label>API Key</label>
-        <input type="text" id="firebaseApiKey" placeholder="AIzaSy...">
+        <input type="text" id="firebaseApiKey" placeholder="AIzaSy..." readonly style="background: #f1f5f9; cursor: not-allowed;">
       </div>
       <div class="form-group">
         <label>Database URL</label>
-        <input type="text" id="firebaseDbUrl" placeholder="https://seu-app-rtdb.firebaseio.com">
+        <input type="text" id="firebaseDbUrl" placeholder="https://..." readonly style="background: #f1f5f9; cursor: not-allowed;">
       </div>
-      <button class="btn btn-secondary" onclick="saveFirebaseConfig()">Salvar Firebase</button>
     </div>
   </div>
 
   <script>
+    // Lista de PINs Alfanuméricos Autorizados
+    const ALLOWED_PINS = ['CASA12', 'MKT2026', 'VOIGT88', 'JOINVILLE24', 'MERCADO1'];
+
+    // Credenciais Fixas do Firebase
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: 'AIzaSyA0DMSIWhpD_2OwpaL2nZgTtlV5DiLRREw',
+      databaseUrl: 'https://listamercado-ed42e-default-rtdb.firebaseio.com'
+    };
+
     const defaultCatalog = [
       {
         id: 'hortifruti',
@@ -1171,7 +1238,7 @@
     ];
 
     let currentTab = 'catalog';
-    let currentRoom = localStorage.getItem('app_firebase_room') || 'padrao';
+    let currentRoom = '';
     let itemsList = [];
     let catalogCategories = [];
     let priceCache = {};
@@ -1186,18 +1253,74 @@
     const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
     function initApp() {
+      // 1. Verifica parâmetro na URL (?sala=PIN) ou no localStorage
       const urlParams = new URLSearchParams(window.location.search);
       const roomParam = urlParams.get('sala');
+      let targetPin = '';
+
       if (roomParam) {
-        currentRoom = roomParam.toLowerCase().trim();
-        localStorage.setItem('app_firebase_room', currentRoom);
+        targetPin = roomParam.trim().toUpperCase();
+      } else {
+        targetPin = (localStorage.getItem('app_firebase_room') || '').trim().toUpperCase();
       }
 
-      document.getElementById('roomDisplay').innerText = `Sala: ${currentRoom}`;
-      document.getElementById('roomInput').value = currentRoom;
+      // 2. Valida o PIN alfanumérico
+      if (targetPin && ALLOWED_PINS.includes(targetPin)) {
+        activateRoom(targetPin);
+      } else {
+        showPinLockScreen();
+      }
+
+      document.getElementById('firebaseApiKey').value = DEFAULT_FIREBASE_CONFIG.apiKey;
+      document.getElementById('firebaseDbUrl').value = DEFAULT_FIREBASE_CONFIG.databaseUrl;
       document.getElementById('geminiApiKeyInput').value = geminiApiKey;
       document.getElementById('geminiModelInput').value = geminiModel;
       document.getElementById('supermarketsInput').value = configuredSupermarkets.join(', ');
+    }
+
+    function showPinLockScreen() {
+      document.getElementById('pinLockScreen').style.display = 'flex';
+      document.getElementById('lockPinInput').focus();
+    }
+
+    function hidePinLockScreen() {
+      document.getElementById('pinLockScreen').style.display = 'none';
+      document.getElementById('pinErrorMsg').style.display = 'none';
+    }
+
+    function validateAndSetPin(pin) {
+      const cleanPin = (pin || '').trim().toUpperCase();
+      if (!cleanPin) {
+        return { valid: false, message: 'Por favor, informe o PIN alfanumérico.' };
+      }
+      if (!ALLOWED_PINS.includes(cleanPin)) {
+        return { valid: false, message: 'PIN inválido! Verifique o código e tente novamente.' };
+      }
+      return { valid: true, pin: cleanPin };
+    }
+
+    function submitPinForm(e) {
+      if (e) e.preventDefault();
+      const inputVal = document.getElementById('lockPinInput').value;
+      const res = validateAndSetPin(inputVal);
+
+      if (!res.valid) {
+        const errEl = document.getElementById('pinErrorMsg');
+        errEl.innerText = res.message;
+        errEl.style.display = 'block';
+        return;
+      }
+
+      activateRoom(res.pin);
+      hidePinLockScreen();
+    }
+
+    function activateRoom(pin) {
+      currentRoom = pin;
+      localStorage.setItem('app_firebase_room', currentRoom);
+
+      document.getElementById('roomDisplay').innerText = `PIN/Sala: ${currentRoom}`;
+      document.getElementById('roomInput').value = currentRoom;
 
       loadLocalData();
       populateCategorySelect();
@@ -1207,6 +1330,18 @@
       renderCatalog();
       renderList();
       updateHeaderProgress();
+    }
+
+    function logoutPin() {
+      if (confirm('Deseja realmente sair da sala atual?')) {
+        localStorage.removeItem('app_firebase_room');
+        currentRoom = '';
+        if (activeFirebaseRef && activeFirebaseListener) {
+          activeFirebaseRef.off('value', activeFirebaseListener);
+        }
+        closeConfigModal();
+        showPinLockScreen();
+      }
     }
 
     function getItemKey(item) {
@@ -1262,6 +1397,7 @@
     }
 
     function loadLocalData() {
+      if (!currentRoom) return;
       const localCatalog = localStorage.getItem(`catalog_${currentRoom}`);
       const rawCatalog = localCatalog ? JSON.parse(localCatalog) : defaultCatalog;
       catalogCategories = mergeCatalog(rawCatalog);
@@ -1274,15 +1410,14 @@
     }
 
     function saveLocalData() {
+      if (!currentRoom) return;
       localStorage.setItem(`catalog_${currentRoom}`, JSON.stringify(catalogCategories));
       localStorage.setItem(`list_${currentRoom}`, JSON.stringify(itemsList));
       localStorage.setItem(`priceCache_${currentRoom}`, JSON.stringify(priceCache));
     }
 
     function setupFirebaseSync() {
-      const config = JSON.parse(localStorage.getItem('app_firebase_config') || '{}');
-      if (config.apiKey) document.getElementById('firebaseApiKey').value = config.apiKey;
-      if (config.databaseUrl) document.getElementById('firebaseDbUrl').value = config.databaseUrl;
+      const config = DEFAULT_FIREBASE_CONFIG;
 
       if (!config.apiKey || !config.databaseUrl) {
         updateStatus('local');
@@ -1797,30 +1932,17 @@
     function closeConfigModal() { document.getElementById('configModal').classList.remove('active'); }
 
     function changeRoom() {
-      const room = document.getElementById('roomInput').value.trim().toLowerCase();
-      if (!room) return;
+      const pin = document.getElementById('roomInput').value;
+      const res = validateAndSetPin(pin);
 
-      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?sala=' + room;
+      if (!res.valid) {
+        return alert(res.message);
+      }
+
+      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?sala=' + res.pin;
       window.history.pushState({path: newUrl}, '', newUrl);
 
-      currentRoom = room;
-      localStorage.setItem('app_firebase_room', currentRoom);
-      document.getElementById('roomDisplay').innerText = `Sala: ${currentRoom}`;
-      
-      loadLocalData();
-      setupFirebaseSync();
-      renderCatalog();
-      renderList();
-      updateHeaderProgress();
-      closeConfigModal();
-    }
-
-    function saveFirebaseConfig() {
-      const apiKey = document.getElementById('firebaseApiKey').value.trim();
-      const databaseUrl = document.getElementById('firebaseDbUrl').value.trim();
-
-      localStorage.setItem('app_firebase_config', JSON.stringify({ apiKey, databaseUrl }));
-      setupFirebaseSync();
+      activateRoom(res.pin);
       closeConfigModal();
     }
 
@@ -1834,7 +1956,6 @@
       const marketsRaw = document.getElementById('supermarketsInput').value.trim();
       const newMarkets = marketsRaw ? marketsRaw.split(',').map(s => s.trim()).filter(Boolean) : ['Angeloni', 'Giassi'];
       
-      // Se novos mercados forem adicionados que não estavam na lista anterior, invalida o cache
       const addedNewMarket = newMarkets.some(m => !configuredSupermarkets.includes(m));
       if (addedNewMarket) {
         priceCache = {};
@@ -1852,7 +1973,7 @@
     function copyShareLink() {
       const shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?sala=' + currentRoom;
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('Link copiado para a área de transferência!');
+        alert(`Link copiado com o PIN "${currentRoom}"!`);
       }).catch(() => {
         prompt('Copie o link abaixo:', shareUrl);
       });
@@ -1860,7 +1981,7 @@
 
     function shareWhatsApp() {
       const shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?sala=' + currentRoom;
-      const text = encodeURIComponent(`Olá! Acompanhe e edite a nossa lista de compras em tempo real aqui: ${shareUrl}`);
+      const text = encodeURIComponent(`Olá! Acompanhe e edite a nossa lista de compras com o PIN ${currentRoom} em tempo real aqui: ${shareUrl}`);
       window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     }
 
@@ -1949,7 +2070,6 @@ REGRAS CRÍTICAS DE PESQUISA:
         const key = getItemKey(item);
         const cachedEntry = priceCache[key];
 
-        // Verifica se todas as lojas configuradas possuem dados no cache de 24h
         const hasAllMarketsInCache = cachedEntry && cachedEntry.markets && configuredSupermarkets.every(m => m in cachedEntry.markets);
 
         if (!forceRefresh && hasAllMarketsInCache && (now - cachedEntry.timestamp < CACHE_TTL_MS)) {
