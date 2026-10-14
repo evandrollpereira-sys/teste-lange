@@ -1998,10 +1998,7 @@ REGRAS CRÍTICAS DE PESQUISA:
       const forceRefresh = document.getElementById('forceRefreshToggle').checked;
       const now = Date.now();
 
-      // Estrutura compilada com os resultados finais por produto
       const compiledResultsMap = {};
-      
-      // Mapeia para cada produto quais mercados necessitam de cotação fresca
       const itemsToFetchByMarket = [];
 
       itemsList.forEach(item => {
@@ -2044,7 +2041,6 @@ REGRAS CRÍTICAS DE PESQUISA:
       });
 
       try {
-        let freshCount = itemsToFetchByMarket.length;
         let totalCachedCells = 0;
         let totalFreshCells = 0;
 
@@ -2066,7 +2062,6 @@ REGRAS CRÍTICAS DE PESQUISA:
             const apiResponse = await callGeminiPriceAPIStrictGrounding(itemsToFetchByMarket);
             groundingUsed = apiResponse.groundingUsed;
 
-            // Mescla os resultados novos no mapa geral e atualiza o priceCache
             apiResponse.results.forEach(res => {
               const itemObj = itemsList.find(i => i.id === res.id);
               if (!itemObj) return;
@@ -2088,7 +2083,6 @@ REGRAS CRÍTICAS DE PESQUISA:
                   isFromCache: false
                 };
 
-                // Salva no cache com o timestamp específico deste mercado
                 priceCache[key].markets[m] = {
                   unitPrice: mData.unitPrice,
                   foundItem: mData.foundItem,
