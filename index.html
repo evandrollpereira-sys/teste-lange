@@ -713,6 +713,37 @@
 </head>
 <body>
 
+  <!-- LOCKSCREEN / MODAL DE LOGIN E AUTENTICAÇÃO -->
+  <div class="modal-overlay active" id="lockscreenModal" style="z-index: 300; background: rgba(15, 23, 42, 0.95);">
+    <div class="modal" style="max-width: 400px; text-align: center; padding: 28px 20px;">
+      <div style="margin-bottom: 16px;">
+        <span class="material-icons-outlined" style="font-size: 3.5rem; color: var(--primary);">lock</span>
+      </div>
+      <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 6px;">Autenticação Acesso</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+        Digite seu Usuário Aprovado e o Código PIN para liberar o aplicativo.
+      </p>
+
+      <div class="form-group" style="text-align: left;">
+        <label>Usuário</label>
+        <input type="text" id="loginUserInput" placeholder="Ex: SILVA" style="text-transform: uppercase; text-align: center; font-weight: 700; font-size: 1.1rem; letter-spacing: 1px;">
+      </div>
+
+      <div class="form-group" style="text-align: left;">
+        <label>Código PIN</label>
+        <input type="password" id="loginPinInput" placeholder="****" style="text-align: center; font-weight: 700; font-size: 1.2rem; letter-spacing: 4px;">
+      </div>
+
+      <div id="loginErrorMsg" style="color: var(--danger); font-size: 0.82rem; font-weight: 600; margin-bottom: 12px; display: none;">
+        Usuário ou PIN incorretos ou conta inativa!
+      </div>
+
+      <button class="btn btn-primary" onclick="performLogin()" style="font-size: 1.05rem;">
+        <span class="material-icons-outlined">key</span> Entrar no App
+      </button>
+    </div>
+  </div>
+
   <header>
     <div class="header-content">
       <div class="brand">
@@ -940,10 +971,16 @@
         <span class="material-icons-outlined" onclick="closeConfigModal()" style="cursor:pointer;">close</span>
       </div>
       <div class="form-group">
-        <label>Nome da Sala Compartilhada</label>
-        <input type="text" id="roomInput" placeholder="Ex: listacompras-voigtlange">
+        <label>Usuário Conectado</label>
+        <input type="text" id="currentUserDisplay" readonly style="background: #f1f5f9; font-weight: bold;">
       </div>
-      <button class="btn btn-primary" onclick="changeRoom()">Conectar / Trocar Sala</button>
+      <div class="form-group">
+        <label>Sala / Grupo Vinculado</label>
+        <input type="text" id="currentRoomDisplay" readonly style="background: #f1f5f9; font-weight: bold;">
+      </div>
+      <button class="btn btn-secondary" onclick="logoutSession()" style="background: var(--danger-light); color: var(--danger);">
+        <span class="material-icons-outlined">logout</span> Desconectar da Conta
+      </button>
       
       <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
 
@@ -982,23 +1019,16 @@
           <span class="material-icons-outlined">share</span> Enviar via WhatsApp
         </button>
       </div>
-
-      <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
-
-      <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Configuração Firebase</h4>
-      <div class="form-group">
-        <label>API Key</label>
-        <input type="text" id="firebaseApiKey" placeholder="AIzaSy...">
-      </div>
-      <div class="form-group">
-        <label>Database URL</label>
-        <input type="text" id="firebaseDbUrl" placeholder="https://seu-app-rtdb.firebaseio.com">
-      </div>
-      <button class="btn btn-secondary" onclick="saveFirebaseConfig()">Salvar Firebase</button>
     </div>
   </div>
 
   <script>
+    // CONFIGURAÇÃO EMBUTIDA DO FIREBASE
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyA0DMSIWhpD_2OwpaL2nZgTtlV5DiLRREw",
+      databaseURL: "https://listamercado-ed42e-default-rtdb.firebaseio.com"
+    };
+
     const defaultCatalog = [
       {
         id: 'hortifruti',
@@ -1171,7 +1201,10 @@
     ];
 
     let currentTab = 'catalog';
-    let currentRoom = localStorage.getItem('app_firebase_room') || 'padrao';
+    let currentUser = localStorage.getItem('app_user_name') || '';
+    let currentRoom = localStorage.getItem('app_firebase_room') || '';
+    let currentGroupName = localStorage.getItem('app_group_name') || 'Sala Compartilhada';
+
     let itemsList = [];
     let catalogCategories = [];
     let priceCache = {};
@@ -1186,15 +1219,78 @@
     const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
     function initApp() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomParam = urlParams.get('sala');
-      if (roomParam) {
-        currentRoom = roomParam.toLowerCase().trim();
-        localStorage.setItem('app_firebase_room', currentRoom);
+      // Inicializa Firebase SDK
+      if (!firebase.apps.length) {
+        firebase.initializeApp(DEFAULT_FIREBASE_CONFIG);
       }
 
-      document.getElementById('roomDisplay').innerText = `Sala: ${currentRoom}`;
-      document.getElementById('roomInput').value = currentRoom;
+      const savedUser = localStorage.getItem('app_user_name');
+      const savedRoom = localStorage.getItem('app_firebase_room');
+
+      if (savedUser && savedRoom) {
+        currentUser = savedUser;
+        currentRoom = savedRoom;
+        document.getElementById('lockscreenModal').classList.remove('active');
+        startSession();
+      } else {
+        document.getElementById('lockscreenModal').classList.add('active');
+      }
+    }
+
+    async function performLogin() {
+      const userRaw = document.getElementById('loginUserInput').value.trim().toUpperCase();
+      const pinRaw = document.getElementById('loginPinInput').value.trim();
+      const errEl = document.getElementById('loginErrorMsg');
+
+      if (!userRaw || !pinRaw) {
+        errEl.innerText = "Informe o Usuário e o PIN!";
+        errEl.style.display = "block";
+        return;
+      }
+
+      errEl.style.display = "none";
+
+      try {
+        const db = firebase.database();
+        const userSnapshot = await db.ref('contas_aprovadas/' + userRaw).once('value');
+        const userData = userSnapshot.val();
+
+        if (!userData || userData.ativo === false || String(userData.pin).trim() !== pinRaw) {
+          errEl.innerText = "Usuário ou PIN incorretos ou conta desativada!";
+          errEl.style.display = "block";
+          return;
+        }
+
+        currentUser = userRaw;
+        currentRoom = userData.salaId;
+        currentGroupName = userData.nomeGrupo || userData.salaId;
+
+        localStorage.setItem('app_user_name', currentUser);
+        localStorage.setItem('app_firebase_room', currentRoom);
+        localStorage.setItem('app_group_name', currentGroupName);
+
+        document.getElementById('lockscreenModal').classList.remove('active');
+        startSession();
+
+      } catch (e) {
+        console.error("Erro na autenticação:", e);
+        errEl.innerText = "Erro ao conectar ao servidor. Tente novamente.";
+        errEl.style.display = "block";
+      }
+    }
+
+    function logoutSession() {
+      localStorage.removeItem('app_user_name');
+      localStorage.removeItem('app_firebase_room');
+      localStorage.removeItem('app_group_name');
+      location.reload();
+    }
+
+    function startSession() {
+      document.getElementById('roomDisplay').innerText = `Grupo: ${currentGroupName}`;
+      document.getElementById('currentUserDisplay').value = currentUser;
+      document.getElementById('currentRoomDisplay').value = `${currentGroupName} (${currentRoom})`;
+
       document.getElementById('geminiApiKeyInput').value = geminiApiKey;
       document.getElementById('geminiModelInput').value = geminiModel;
       document.getElementById('supermarketsInput').value = configuredSupermarkets.join(', ');
@@ -1280,25 +1376,7 @@
     }
 
     function setupFirebaseSync() {
-      const config = JSON.parse(localStorage.getItem('app_firebase_config') || '{}');
-      if (config.apiKey) document.getElementById('firebaseApiKey').value = config.apiKey;
-      if (config.databaseUrl) document.getElementById('firebaseDbUrl').value = config.databaseUrl;
-
-      if (!config.apiKey || !config.databaseUrl) {
-        updateStatus('local');
-        return;
-      }
-
       try {
-        if (!firebase.apps.length) {
-          firebase.initializeApp({
-            apiKey: config.apiKey,
-            databaseURL: config.databaseUrl
-          });
-        }
-
-        firebase.auth().signInAnonymously().catch(() => {});
-
         const db = firebase.database();
         const roomRef = db.ref('salas/' + currentRoom);
 
@@ -1344,7 +1422,7 @@
         window.appChannel.postMessage({ type: 'sync', room: currentRoom, itemsList, catalogCategories, priceCache });
       }
 
-      if (activeFirebaseRef && firebase.apps.length) {
+      if (activeFirebaseRef) {
         activeFirebaseRef.set({
           list: itemsList,
           catalog: catalogCategories,
@@ -1796,34 +1874,6 @@
     function openConfigModal() { document.getElementById('configModal').classList.add('active'); }
     function closeConfigModal() { document.getElementById('configModal').classList.remove('active'); }
 
-    function changeRoom() {
-      const room = document.getElementById('roomInput').value.trim().toLowerCase();
-      if (!room) return;
-
-      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?sala=' + room;
-      window.history.pushState({path: newUrl}, '', newUrl);
-
-      currentRoom = room;
-      localStorage.setItem('app_firebase_room', currentRoom);
-      document.getElementById('roomDisplay').innerText = `Sala: ${currentRoom}`;
-      
-      loadLocalData();
-      setupFirebaseSync();
-      renderCatalog();
-      renderList();
-      updateHeaderProgress();
-      closeConfigModal();
-    }
-
-    function saveFirebaseConfig() {
-      const apiKey = document.getElementById('firebaseApiKey').value.trim();
-      const databaseUrl = document.getElementById('firebaseDbUrl').value.trim();
-
-      localStorage.setItem('app_firebase_config', JSON.stringify({ apiKey, databaseUrl }));
-      setupFirebaseSync();
-      closeConfigModal();
-    }
-
     function saveGeminiConfig() {
       geminiApiKey = document.getElementById('geminiApiKeyInput').value.trim();
       localStorage.setItem('app_gemini_key', geminiApiKey);
@@ -1834,7 +1884,6 @@
       const marketsRaw = document.getElementById('supermarketsInput').value.trim();
       const newMarkets = marketsRaw ? marketsRaw.split(',').map(s => s.trim()).filter(Boolean) : ['Angeloni', 'Giassi'];
       
-      // Se novos mercados forem adicionados que não estavam na lista anterior, invalida o cache
       const addedNewMarket = newMarkets.some(m => !configuredSupermarkets.includes(m));
       if (addedNewMarket) {
         priceCache = {};
@@ -1845,22 +1894,22 @@
       localStorage.setItem('app_supermarkets', configuredSupermarkets.join(', '));
 
       syncToCloud();
-      alert(addedNewMarket ? 'Novos supermercados adicionados! O cache de preços foi resetado para incluir o novo mercado.' : 'Configurações salvas!');
+      alert(addedNewMarket ? 'Novos supermercados adicionados! O cache de preços foi resetado.' : 'Configurações salvas!');
       closeConfigModal();
     }
 
     function copyShareLink() {
-      const shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?sala=' + currentRoom;
+      const shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('Link copiado para a área de transferência!');
+        alert('Link do aplicativo copiado para a área de transferência!');
       }).catch(() => {
         prompt('Copie o link abaixo:', shareUrl);
       });
     }
 
     function shareWhatsApp() {
-      const shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?sala=' + currentRoom;
-      const text = encodeURIComponent(`Olá! Acompanhe e edite a nossa lista de compras em tempo real aqui: ${shareUrl}`);
+      const shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      const text = encodeURIComponent(`Olá! Acompanhe a nossa lista de compras no MercadoApp acessando: ${shareUrl}`);
       window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     }
 
@@ -1949,7 +1998,6 @@ REGRAS CRÍTICAS DE PESQUISA:
         const key = getItemKey(item);
         const cachedEntry = priceCache[key];
 
-        // Verifica se todas as lojas configuradas possuem dados no cache de 24h
         const hasAllMarketsInCache = cachedEntry && cachedEntry.markets && configuredSupermarkets.every(m => m in cachedEntry.markets);
 
         if (!forceRefresh && hasAllMarketsInCache && (now - cachedEntry.timestamp < CACHE_TTL_MS)) {
