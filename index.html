@@ -1171,7 +1171,7 @@
     ];
 
     let currentTab = 'catalog';
-    let currentRoom = 'padrao';
+    let currentRoom = localStorage.getItem('app_firebase_room') || 'padrao';
     let itemsList = [];
     let catalogCategories = [];
     let priceCache = {};
@@ -1188,7 +1188,10 @@
     function initApp() {
       const urlParams = new URLSearchParams(window.location.search);
       const roomParam = urlParams.get('sala');
-      if (roomParam) currentRoom = roomParam.toLowerCase().trim();
+      if (roomParam) {
+        currentRoom = roomParam.toLowerCase().trim();
+        localStorage.setItem('app_firebase_room', currentRoom);
+      }
 
       document.getElementById('roomDisplay').innerText = `Sala: ${currentRoom}`;
       document.getElementById('roomInput').value = currentRoom;
@@ -1801,6 +1804,7 @@
       window.history.pushState({path: newUrl}, '', newUrl);
 
       currentRoom = room;
+      localStorage.setItem('app_firebase_room', currentRoom);
       document.getElementById('roomDisplay').innerText = `Sala: ${currentRoom}`;
       
       loadLocalData();
