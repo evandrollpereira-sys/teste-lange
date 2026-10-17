@@ -234,13 +234,13 @@
       background: var(--card-bg);
       border-radius: var(--radius);
       border: 1px solid var(--header-border);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       overflow: hidden;
       box-shadow: var(--shadow-sm);
     }
 
     .category-header {
-      padding: 14px 16px;
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -253,14 +253,14 @@
     .category-title {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1rem;
       color: var(--text);
     }
 
     .category-title .material-icons-outlined {
-      font-size: 1.4rem !important;
+      font-size: 1.25rem !important;
     }
 
     .icon-hortifruti { color: #16a34a !important; }
@@ -620,68 +620,9 @@
       background: #fff;
       border-radius: var(--radius);
       border: 1px solid var(--border);
-      padding: 16px;
-      margin-bottom: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
       box-shadow: var(--shadow-sm);
-    }
-
-    .compare-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 0.85rem;
-    }
-
-    .compare-table th {
-      background: #f1f5f9;
-      padding: 10px;
-      text-align: center;
-      font-weight: 700;
-      color: #334155;
-      border-bottom: 2px solid var(--border);
-    }
-
-    .compare-table td {
-      padding: 10px 8px;
-      border-bottom: 1px solid var(--border);
-      text-align: center;
-      vertical-align: top;
-    }
-
-    .compare-table td.item-cell {
-      text-align: left;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .found-product-detail {
-      font-size: 0.72rem;
-      color: #64748b;
-      margin-top: 4px;
-      line-height: 1.2;
-      font-weight: normal;
-    }
-
-    .cheapest-badge {
-      background: #d1fae5;
-      color: #065f46;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-top: 4px;
-      font-size: 0.7rem;
-    }
-
-    .cached-badge {
-      background: #e0f2fe;
-      color: #0369a1;
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 2px 5px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-top: 2px;
     }
 
     .grounding-status {
@@ -713,7 +654,6 @@
       border: 1px solid #fde68a;
     }
 
-    /* Estilos específicos para o Scanner de Cupom Fiscal e Histórico de Preços */
     .scanned-item-card {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -731,6 +671,137 @@
     .match-exact { background: #d1fae5; color: #065f46; }
     .match-suggested { background: #fef3c7; color: #92400e; }
     .match-none { background: #f1f5f9; color: #475569; }
+
+    /* ESTILOS OTIMIZADOS MOBILE-FIRST DA MATRIZ DE PREÇOS */
+    .price-market-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      width: 100%;
+    }
+
+    .price-market-badge {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      width: 100%;
+      box-sizing: border-box;
+      transition: background-color 0.15s ease;
+    }
+
+    .price-market-badge.cheapest {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #065f46;
+    }
+
+    .price-market-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      padding-right: 4px;
+    }
+
+    .price-market-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .price-market-name {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .price-market-badge.cheapest .price-market-name {
+      color: #065f46;
+    }
+
+    .price-market-subtext {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      line-height: 1.25;
+      word-break: break-word;
+      margin-top: 2px;
+    }
+
+    .price-market-badge.cheapest .price-market-subtext {
+      color: #047857;
+    }
+
+    .price-market-values {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .price-market-total {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .price-market-badge.cheapest .price-market-total {
+      color: #047857;
+    }
+
+    .price-market-unit {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .price-market-badge.cheapest .price-market-unit {
+      color: #059669;
+    }
+
+    .cheapest-inline-tag {
+      background: #10b981;
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      line-height: 1.3;
+    }
+
+    /* Otimização responsiva para Tablets e Desktop */
+    @media (min-width: 640px) {
+      .price-market-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 8px;
+      }
+      .price-market-badge {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .price-market-values {
+        align-items: flex-start;
+        margin-top: 6px;
+        width: 100%;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        padding-top: 4px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -815,124 +886,101 @@
       <div id="listContainer"></div>
     </section>
 
-    <!-- SEÇÃO 3: COMPARAR PREÇOS -->
-    <section id="compareSection" style="display: none;">
-      <div class="compare-card space-y-4">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-          <div>
-            <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text);">Comparador de Preços (Joinville)</h2>
-            <p style="font-size: 0.8rem; color: var(--text-muted);">Cache Inteligente de 24h + Busca Otimizada em Gemini API</p>
+    <!-- SEÇÃO 3: PREÇOS (MESCLADO: ESCANEAR CUPOM + COMPARAR PREÇOS DA LISTA) -->
+    <section id="pricesSection" style="display: none;">
+      <!-- BLOCO A: SCANNER DE CUPOM FISCAL -->
+      <div class="compare-card space-y-4 mb-4">
+        <div style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+          <h2 style="font-size: 1.05rem; font-weight: 800; color: var(--text);">Escanear Cupom Fiscal</h2>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Tire uma foto do cupom para extrair valores e atualizar o histórico por unidade.</p>
+        </div>
+
+        <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processReceiptImage(this.files[0])">
+        <input type="file" id="receiptGalleryInput" accept="image/*" style="display: none;" onchange="processReceiptImage(this.files[0])">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+          <button onclick="document.getElementById('receiptCameraInput').click()" style="background: var(--primary); color: white; border: none; padding: 10px 8px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: var(--shadow-sm);">
+            <span class="material-icons-outlined" style="font-size: 1.4rem;">photo_camera</span> Tirar Foto
+          </button>
+
+          <button onclick="document.getElementById('receiptGalleryInput').click()" style="background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 10px 8px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: var(--shadow-sm);">
+            <span class="material-icons-outlined" style="font-size: 1.4rem; color: #0284c7;">collections</span> Usar Galeria
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State Leitura Cupom -->
+      <div id="receiptLoading" style="display: none; text-align: center; padding: 20px 16px; background: #fff; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 12px;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.8rem; color: var(--primary); margin-bottom: 8px;"></i>
+        <p style="font-weight: 700; font-size: 0.9rem; color: var(--text);">Processando cupom fiscal...</p>
+        <p style="font-size: 0.78rem; color: var(--text-muted);">Extraindo itens e valores usando Gemini 3.8-flash</p>
+      </div>
+
+      <!-- Validação dos Itens Lido do Cupom -->
+      <div id="receiptResultsContainer" style="display: none; margin-bottom: 12px;">
+        <div class="compare-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--text);">Itens Extraídos do Cupom</h3>
+            <span id="receiptMarketTag" style="font-size: 0.75rem; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 12px;">-</span>
           </div>
-          <button onclick="openConfigModal()" style="font-size: 0.8rem; font-weight: 600; background: #f1f5f9; border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; cursor: pointer;">
-            <i class="fa-solid fa-key" style="margin-right: 4px; color: var(--text-muted);"></i> Configurar
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px;">Confira a correspondência dos itens lidos antes de gravar no histórico.</p>
+          <div id="scannedItemsList"></div>
+          <button onclick="saveReceiptPricesToHistory()" style="width: 100%; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; margin-top: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span class="material-icons-outlined" style="font-size: 1.2rem;">save</span> Confirmar e Salvar no Histórico
+          </button>
+        </div>
+      </div>
+
+      <!-- BLOCO B: COMPARADOR DE PREÇOS NA WEB -->
+      <div class="compare-card space-y-4">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+          <div>
+            <h2 style="font-size: 1.05rem; font-weight: 800; color: var(--text);">Comparador de Preços (Joinville)</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted);">Busca de ofertas reais em supermercados locais via Gemini</p>
+          </div>
+          <button onclick="openConfigModal()" style="font-size: 0.78rem; font-weight: 600; background: #f1f5f9; border: 1px solid var(--border); padding: 5px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+            <i class="fa-solid fa-key" style="margin-right: 3px; color: var(--text-muted);"></i> Config
           </button>
         </div>
 
-        <p style="font-size: 0.85rem; color: #475569; margin-top: 10px;">
-          A cotação reutiliza dados válidos pesquisados nas últimas 24 horas para economizar tokens:
-        </p>
-
-        <!-- Force Refresh Toggle -->
-        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
-          <input type="checkbox" id="forceRefreshToggle" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
-          <label for="forceRefreshToggle" style="font-size: 0.82rem; font-weight: 600; color: var(--text); cursor: pointer;">
-            Recotar Tudo (Forçar busca online no Gemini, ignorar cache de 24h)
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; background: #f8fafc; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);">
+          <input type="checkbox" id="forceRefreshToggle" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0;">
+          <label for="forceRefreshToggle" style="font-size: 0.8rem; font-weight: 600; color: var(--text); cursor: pointer; line-height: 1.2;">
+            Recotar Tudo (Forçar busca online no Gemini, ignorar cache)
           </label>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-          <button id="btnFetchPrices" onclick="fetchPricesOnDemand()" style="width: 100%; background: linear-gradient(135deg, #10b981, #047857); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--shadow-sm);">
-            <i class="fa-solid fa-magnifying-glass-dollar"></i> Buscar Preços em Joinville (On-Demand)
+          <button id="btnFetchPrices" onclick="fetchPricesOnDemand()" style="width: 100%; background: linear-gradient(135deg, #10b981, #047857); color: white; border: none; padding: 11px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: var(--shadow-sm);">
+            <i class="fa-solid fa-magnifying-glass-dollar"></i> Buscar Preços da Lista em Joinville
           </button>
 
-          <button id="btnGeneratePrompt" onclick="generateAndCopyAIPrompt()" style="width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--shadow-sm);">
-            <span class="material-icons-outlined" style="font-size: 1.2rem;">psychology</span> Gerar & Copiar Prompt para IAs
+          <button id="btnGeneratePrompt" onclick="generateAndCopyAIPrompt()" style="width: 100%; background: #0284c7; color: white; border: none; padding: 11px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: var(--shadow-sm);">
+            <span class="material-icons-outlined" style="font-size: 1.1rem;">psychology</span> Gerar & Copiar Prompt para IAs
           </button>
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div id="compareLoading" style="display: none; text-align: center; padding: 30px 20px; background: #fff; border-radius: var(--radius); border: 1px solid var(--border);">
-        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
-        <p id="loadingTitle" style="font-weight: 700; font-size: 0.95rem; color: var(--text);">Pesquisando preços reais em Joinville via Google Search...</p>
-        <p id="loadingSub" style="font-size: 0.8rem; color: var(--text-muted);">Consultando apenas itens/mercados não cotados nas últimas 24 horas</p>
+      <!-- Loading State do Comparador -->
+      <div id="compareLoading" style="display: none; text-align: center; padding: 25px 16px; background: #fff; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 12px;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.8rem; color: var(--primary); margin-bottom: 8px;"></i>
+        <p id="loadingTitle" style="font-weight: 700; font-size: 0.9rem; color: var(--text);">Pesquisando preços reais em Joinville via Google Search...</p>
+        <p id="loadingSub" style="font-size: 0.78rem; color: var(--text-muted);">Consultando apenas itens/mercados não cotados nas últimas 24 horas</p>
       </div>
 
-      <!-- Results Container -->
+      <!-- Resultados da Comparação de Preços -->
       <div id="compareResults" style="display: none;" class="space-y-4">
-        
-        <!-- Grounding & Cache Status Indicator -->
         <div id="groundingBadge" class="grounding-status success">
           <i class="fa-solid fa-shield-check"></i>
           <span id="groundingText">Resultados atualizados combinando Cache de 24h + Busca em Tempo Real</span>
         </div>
 
-        <!-- Sorted Expandable Baskets List -->
-        <div id="sortedBasketList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;"></div>
+        <div id="sortedBasketList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;"></div>
 
-        <!-- Matrix Table Card -->
-        <div class="compare-card" style="overflow-x: auto;">
-          <h3 style="font-size: 1rem; font-weight: 800; color: var(--text);">Matriz de Preços por Mercado</h3>
-          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;">Preço final (Qtd × Unidade) + Detalhes do Produto</p>
-
-          <table class="compare-table">
-            <thead></thead>
-            <tbody id="compareTableBody"></tbody>
-            <tfoot></tfoot>
-          </table>
-        </div>
-
+        <!-- Matriz de Preços Organizada por Categoria (Semelhante a Minha Lista) -->
+        <div id="priceComparisonCategoryContainer"></div>
       </div>
     </section>
-
-    <!-- SEÇÃO 4: SCANNER DE CUPOM FISCAL -->
-    <section id="receiptSection" style="display: none;">
-      <div class="compare-card space-y-4">
-        <div style="border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-          <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text);">Escanear Cupom Fiscal</h2>
-          <p style="font-size: 0.8rem; color: var(--text-muted);">Tire uma foto ou envie a imagem do cupom para atualizar o histórico de preços por unidade.</p>
-        </div>
-
-        <!-- Inputs Ocultos para Câmera e Galeria -->
-        <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processReceiptImage(this.files[0])">
-        <input type="file" id="receiptGalleryInput" accept="image/*" style="display: none;" onchange="processReceiptImage(this.files[0])">
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-          <button onclick="document.getElementById('receiptCameraInput').click()" style="background: var(--primary); color: white; border: none; padding: 14px 10px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: var(--shadow-sm);">
-            <span class="material-icons-outlined" style="font-size: 1.6rem;">photo_camera</span> Tirar Foto do Cupom
-          </button>
-
-          <button onclick="document.getElementById('receiptGalleryInput').click()" style="background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 14px 10px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: var(--shadow-sm);">
-            <span class="material-icons-outlined" style="font-size: 1.6rem; color: #0284c7;">collections</span> Escolher da Galeria
-          </button>
-        </div>
-      </div>
-
-      <!-- Loading State da Leitura do Cupom -->
-      <div id="receiptLoading" style="display: none; text-align: center; padding: 30px 20px; background: #fff; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 16px;">
-        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
-        <p style="font-weight: 700; font-size: 0.95rem; color: var(--text);">Processando e otimizando imagem...</p>
-        <p id="receiptLoadingSub" style="font-size: 0.8rem; color: var(--text-muted);">Extraindo itens e valores usando Gemini 3.8-flash...</p>
-      </div>
-
-      <!-- Resultados da Leitura e Validação -->
-      <div id="receiptResultsContainer" style="display: none;">
-        <div class="compare-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="font-size: 1rem; font-weight: 800; color: var(--text);">Itens Extraídos do Cupom</h3>
-            <span id="receiptMarketTag" style="font-size: 0.8rem; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 12px;">-</span>
-          </div>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">Confira a correspondência de cada item lido com o seu catálogo antes de salvar.</p>
-
-          <div id="scannedItemsList"></div>
-
-          <button onclick="saveReceiptPricesToHistory()" style="width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 1rem; margin-top: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <span class="material-icons-outlined">save</span> Confirmar e Salvar no Histórico
-          </button>
-        </div>
-      </div>
-    </section>
-
   </main>
 
   <button class="fab" id="fabBtn" onclick="openAddModal()">
@@ -951,19 +999,13 @@
         <span class="material-icons-outlined">shopping_bag</span>
         <span class="nav-badge" id="listBadge" style="display: none;">0</span>
       </span>
-      <span>Comprar</span>
+      <span>Minha Lista</span>
     </div>
-    <div class="nav-item" id="navReceipt" onclick="switchTab('receipt')">
+    <div class="nav-item" id="navPrices" onclick="switchTab('prices')">
       <span class="nav-icon-wrapper">
-        <span class="material-icons-outlined">receipt_long</span>
+        <span class="material-icons-outlined">attach_money</span>
       </span>
-      <span>Escanear</span>
-    </div>
-    <div class="nav-item" id="navCompare" onclick="switchTab('compare')">
-      <span class="nav-icon-wrapper">
-        <span class="material-icons-outlined">compare_arrows</span>
-      </span>
-      <span>Comparar</span>
+      <span>Preços</span>
     </div>
   </nav>
 
@@ -1343,7 +1385,7 @@
     let itemsList = [];
     let catalogCategories = [];
     let priceCache = {};
-    let priceHistory = {}; // Estrutura para armazenar o histórico de preços por produto
+    let priceHistory = {};
     let openCategories = new Set();
     let activeFirebaseRef = null;
     let activeFirebaseListener = null;
@@ -1351,9 +1393,9 @@
     let geminiApiKey = localStorage.getItem('app_gemini_key') || '';
     let geminiModel = localStorage.getItem('app_gemini_model') || 'gemini-3.8-flash';
     let configuredSupermarkets = (localStorage.getItem('app_supermarkets') || 'Angeloni, Giassi').split(',').map(s => s.trim()).filter(Boolean);
-    let historyDays = parseInt(localStorage.getItem('app_history_days')) || 90; // 90 dias como padrão (3 meses)
+    let historyDays = parseInt(localStorage.getItem('app_history_days')) || 90;
 
-    let scannedReceiptData = null; // Armazena temporariamente a leitura do cupom fiscal
+    let scannedReceiptData = null;
     let priceHistoryChartInstance = null;
 
     const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -1626,16 +1668,14 @@
       currentTab = tab;
       document.getElementById('navCatalog').classList.toggle('active', tab === 'catalog');
       document.getElementById('navList').classList.toggle('active', tab === 'list');
-      document.getElementById('navReceipt').classList.toggle('active', tab === 'receipt');
-      document.getElementById('navCompare').classList.toggle('active', tab === 'compare');
+      document.getElementById('navPrices').classList.toggle('active', tab === 'prices');
 
       document.getElementById('catalogSection').style.display = tab === 'catalog' ? 'block' : 'none';
       document.getElementById('listSection').style.display = tab === 'list' ? 'block' : 'none';
-      document.getElementById('receiptSection').style.display = tab === 'receipt' ? 'block' : 'none';
-      document.getElementById('compareSection').style.display = tab === 'compare' ? 'block' : 'none';
+      document.getElementById('pricesSection').style.display = tab === 'prices' ? 'block' : 'none';
 
-      document.getElementById('searchBoxContainer').style.display = (tab === 'compare' || tab === 'receipt') ? 'none' : 'block';
-      document.getElementById('fabBtn').style.display = (tab === 'compare' || tab === 'receipt') ? 'none' : 'flex';
+      document.getElementById('searchBoxContainer').style.display = tab === 'prices' ? 'none' : 'block';
+      document.getElementById('fabBtn').style.display = tab === 'prices' ? 'none' : 'flex';
     }
 
     function getCategoryInfo(catName) {
@@ -1821,7 +1861,6 @@
       });
     }
 
-    /* HISTÓRICO DE PREÇOS E GRÁFICOS NO MODAL AO CLICAR EM UM ITEM DA LISTA */
     function openPriceHistoryModal(productName) {
       const modal = document.getElementById('priceHistoryModal');
       document.getElementById('historyModalTitle').innerText = productName;
@@ -1842,7 +1881,6 @@
           </div>
         `;
       } else {
-        // Ordena do mais recente para o mais antigo
         [...filteredEntries].reverse().forEach(entry => {
           const dateFormatted = new Date(entry.date).toLocaleDateString('pt-BR');
           const unitStr = entry.unit ? ` / ${entry.unit}` : '';
@@ -1864,9 +1902,7 @@
         });
       }
 
-      // Renderiza o Gráfico com Chart.js
       renderPriceHistoryChart(filteredEntries);
-
       modal.classList.add('active');
     }
 
@@ -1907,22 +1943,17 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
+          plugins: { legend: { display: false } },
           scales: {
             y: {
               beginAtZero: false,
-              ticks: {
-                callback: function(value) { return 'R$ ' + value.toFixed(2); }
-              }
+              ticks: { callback: function(value) { return 'R$ ' + value.toFixed(2); } }
             }
           }
         }
       });
     }
 
-    /* PROCESSAMENTO E EXTRAÇÃO DE CUPOM FISCAL */
     async function processReceiptImage(file) {
       if (!file) return;
 
@@ -2048,7 +2079,6 @@ Responda ESTRITAMENTE em JSON sem markdown no seguinte formato:
       };
     }
 
-    /* BUSCA DE CORRESPONDÊNCIA NO CATÁLOGO E CONFIRMAÇÃO */
     function findBestCatalogMatch(rawName) {
       const cleanRaw = rawName.toLowerCase().replace(/[^a-z0-9\s]/g, '');
       let bestMatch = null;
@@ -2573,6 +2603,7 @@ REGRAS CRÍTICAS DE PESQUISA:
           id: item.id,
           name: item.name,
           qty: item.qty,
+          category: item.category || 'Outros',
           comment: item.comment,
           markets: {}
         };
@@ -2784,6 +2815,7 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           id: item.id,
           name: item.name,
           qty: item.qty,
+          category: item.category || 'Outros',
           markets: marketsData
         };
       });
@@ -2810,6 +2842,7 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           id: item.id,
           name: item.name,
           qty: item.qty,
+          category: item.category || 'Outros',
           markets: marketsData
         };
       });
@@ -2835,14 +2868,16 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           id: item.id,
           name: item.name,
           qty: item.qty,
+          category: item.category || 'Outros',
           markets: marketsData
         };
       });
     }
 
+    /* EXIBIÇÃO DA COMPARAÇÃO POR CATEGORIA E ORDEM ALFABÉTICA (ESTILIZADA MOBILE-FIRST) */
     function renderComparisonMatrix(results, groundingUsed = true, freshCount = 0, cacheCount = 0) {
-      const table = document.querySelector('.compare-table');
-      if (!table) return;
+      const categoryContainer = document.getElementById('priceComparisonCategoryContainer');
+      if (!categoryContainer) return;
 
       const badge = document.getElementById('groundingBadge');
       const badgeText = document.getElementById('groundingText');
@@ -2865,9 +2900,6 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
 
       const totalsByMarket = {};
       markets.forEach(m => totalsByMarket[m] = 0);
-
-      const splitByMarket = {};
-      markets.forEach(m => splitByMarket[m] = []);
 
       let optimizedSum = 0;
       const optimizedItems = [];
@@ -2894,7 +2926,6 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
 
         if (cheapestMarket && cheapestVal !== Infinity) {
           optimizedSum += cheapestVal;
-          splitByMarket[cheapestMarket].push(`• ${res.name} (${res.qty}un) - R$ ${cheapestVal.toFixed(2)}`);
           optimizedItems.push({
             name: res.name,
             qty: res.qty,
@@ -2910,7 +2941,6 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
       basketListContainer.innerHTML = '';
 
       const summaryOptions = [];
-
       summaryOptions.push({
         id: 'opt_cesta_otimizada',
         title: 'Cesta Otimizada',
@@ -2953,7 +2983,7 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           color: #ffffff;
           border-radius: 8px;
           overflow: hidden;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
           transition: all 0.2s ease;
         `;
 
@@ -2962,40 +2992,40 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 16px 20px;
+          padding: 12px 14px;
           cursor: pointer;
           font-weight: 700;
-          font-size: 1.15rem;
+          font-size: 1.05rem;
           user-select: none;
         `;
 
         header.innerHTML = `
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-chevron-down arrow-indicator" style="font-size: 0.9rem; transition: transform 0.2s;"></i>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-chevron-down arrow-indicator" style="font-size: 0.85rem; transition: transform 0.2s;"></i>
             <span>${escapeHTML(opt.title)}</span>
           </div>
-          <span style="font-weight: 800; font-size: 1.25rem;">R$ ${opt.total.toFixed(2).replace('.', ',')}</span>
+          <span style="font-weight: 800; font-size: 1.15rem;">R$ ${opt.total.toFixed(2).replace('.', ',')}</span>
         `;
 
         const detailsContent = document.createElement('div');
         detailsContent.style.cssText = `
           display: none;
           background-color: #047857;
-          padding: 14px 18px;
+          padding: 12px 14px;
           border-top: 1px solid rgba(255, 255, 255, 0.2);
-          font-size: 0.85rem;
+          font-size: 0.82rem;
         `;
 
-        let listHTML = `<ul style="list-style: none; display: flex; flex-direction: column; gap: 8px;">`;
+        let listHTML = `<ul style="list-style: none; display: flex; flex-direction: column; gap: 6px;">`;
         opt.items.forEach(item => {
           if (opt.type === 'optimized') {
             listHTML += `
-              <li style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
+              <li style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 5px;">
                 <div>
-                  <div style="font-weight: 700;">${escapeHTML(item.name)} <span style="font-weight: 400; font-size: 0.78rem;">(${item.qty}un)</span></div>
-                  <div style="font-size: 0.75rem; color: #a7f3d0;"><i class="fa-solid fa-store" style="margin-right: 4px;"></i>${escapeHTML(item.market)} - ${escapeHTML(item.foundItem)}</div>
+                  <div style="font-weight: 700;">${escapeHTML(item.name)} <span style="font-weight: 400; font-size: 0.75rem;">(${item.qty}un)</span></div>
+                  <div style="font-size: 0.73rem; color: #a7f3d0;"><i class="fa-solid fa-store" style="margin-right: 3px;"></i>${escapeHTML(item.market)} - ${escapeHTML(item.foundItem)}</div>
                 </div>
-                <div style="font-weight: 800; text-align: right; min-width: 70px;">
+                <div style="font-weight: 800; text-align: right; min-width: 65px;">
                   R$ ${item.totalPrice.toFixed(2).replace('.', ',')}
                 </div>
               </li>
@@ -3003,12 +3033,12 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
           } else {
             const hasPrice = item.totalPrice !== null && item.totalPrice !== undefined;
             listHTML += `
-              <li style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px;">
+              <li style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 5px;">
                 <div>
-                  <div style="font-weight: 700;">${escapeHTML(item.name)} <span style="font-weight: 400; font-size: 0.78rem;">(${item.qty}un)</span></div>
-                  <div style="font-size: 0.75rem; color: #a7f3d0;">${escapeHTML(item.foundItem)}</div>
+                  <div style="font-weight: 700;">${escapeHTML(item.name)} <span style="font-weight: 400; font-size: 0.75rem;">(${item.qty}un)</span></div>
+                  <div style="font-size: 0.73rem; color: #a7f3d0;">${escapeHTML(item.foundItem)}</div>
                 </div>
-                <div style="font-weight: 800; text-align: right; min-width: 70px;">
+                <div style="font-weight: 800; text-align: right; min-width: 65px;">
                   ${hasPrice ? `R$ ${item.totalPrice.toFixed(2).replace('.', ',')}` : 'N/D'}
                 </div>
               </li>
@@ -3030,74 +3060,111 @@ Formato de resposta JSON ultracompacto (NÃO crie textos explicativos fora do JS
         basketListContainer.appendChild(card);
       });
 
-      let theadHTML = `<thead><tr><th style="text-align: left;">Item (Qtd)</th>`;
-      markets.forEach(m => {
-        theadHTML += `<th>${escapeHTML(m)}</th>`;
+      // RENDERIZAÇÃO OTIMIZADA E COMPACTA POR CATEGORIA E ORDEM ALFABÉTICA
+      categoryContainer.innerHTML = '';
+
+      const groupedResults = {};
+      results.forEach(item => {
+        const catName = item.category || 'Outros';
+        if (!groupedResults[catName]) groupedResults[catName] = [];
+        groupedResults[catName].push(item);
       });
-      theadHTML += `</tr></thead>`;
 
-      let tbodyHTML = `<tbody>`;
+      Object.keys(groupedResults).forEach(catName => {
+        const card = document.createElement('div');
+        card.className = 'category-card open';
+        const info = getCategoryInfo(catName);
 
-      results.forEach(res => {
-        let cheapestMarket = null;
-        let cheapestVal = Infinity;
-
-        markets.forEach(m => {
-          const mData = res.markets?.[m];
-          if (mData && mData.totalPrice !== null) {
-            if (mData.totalPrice < cheapestVal) {
-              cheapestVal = mData.totalPrice;
-              cheapestMarket = m;
-            }
-          }
-        });
-
-        tbodyHTML += `
-          <tr>
-            <td class="item-cell">
-              <div>${escapeHTML(res.name)}</div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">${res.qty} un × Unid</div>
-            </td>
+        const header = document.createElement('div');
+        header.className = 'category-header';
+        header.innerHTML = `
+          <div class="category-title">
+            <span class="material-icons-outlined ${info.class}">${info.icon}</span>
+            <span>${escapeHTML(catName)}</span>
+          </div>
         `;
 
-        markets.forEach(m => {
-          const mData = res.markets?.[m] || { totalPrice: null, unitPrice: null, foundItem: 'Não disponível', isFromCache: false };
-          const isCheapest = m === cheapestMarket && mData.totalPrice !== null;
+        const productList = document.createElement('div');
+        productList.className = 'product-list';
 
-          if (mData.totalPrice !== null) {
-            tbodyHTML += `
-              <td style="${isCheapest ? 'background:#ecfdf5; font-weight:bold; color:#065f46;' : ''}">
-                <div>
-                  R$ ${mData.totalPrice.toFixed(2)}
-                  ${mData.isFromCache ? '<span class="cached-badge" style="margin-left:4px;"><i class="fa-solid fa-clock-rotate-left"></i> 24h</span>' : ''}
+        // ORDENAÇÃO ALFABÉTICA DOS PRODUTOS DA CATEGORIA
+        groupedResults[catName].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+
+        groupedResults[catName].forEach(res => {
+          let cheapestMarket = null;
+          let cheapestVal = Infinity;
+
+          markets.forEach(m => {
+            const mData = res.markets?.[m];
+            if (mData && mData.totalPrice !== null) {
+              if (mData.totalPrice < cheapestVal) {
+                cheapestVal = mData.totalPrice;
+                cheapestMarket = m;
+              }
+            }
+          });
+
+          const row = document.createElement('div');
+          row.className = 'item-row';
+          
+          let marketsHTML = `<div class="price-market-grid">`;
+          markets.forEach(m => {
+            const mData = res.markets?.[m] || { totalPrice: null, unitPrice: null, foundItem: 'Não disponível', isFromCache: false };
+            const isCheapest = m === cheapestMarket && mData.totalPrice !== null;
+
+            if (mData.totalPrice !== null) {
+              marketsHTML += `
+                <div class="price-market-badge ${isCheapest ? 'cheapest' : ''}">
+                  <div class="price-market-info">
+                    <div class="price-market-name-row">
+                      <span class="price-market-name">${escapeHTML(m)}</span>
+                      ${isCheapest ? '<span class="cheapest-inline-tag"><i class="fa-solid fa-check"></i> Menor preço</span>' : ''}
+                      ${mData.isFromCache ? '<i class="fa-solid fa-clock-rotate-left" title="Cache 24h" style="font-size:0.68rem; color:var(--text-muted);"></i>' : ''}
+                    </div>
+                    <div class="price-market-subtext">${escapeHTML(mData.foundItem || '')}</div>
+                  </div>
+                  <div class="price-market-values">
+                    <div class="price-market-total">R$ ${mData.totalPrice.toFixed(2)}</div>
+                    <div class="price-market-unit">Un: R$ ${mData.unitPrice.toFixed(2)}</div>
+                  </div>
                 </div>
-                <div style="font-size: 0.72rem; color: #475569; margin-top:2px;">(Un: R$ ${mData.unitPrice.toFixed(2)})</div>
-                <div class="found-product-detail">${escapeHTML(mData.foundItem || '')}</div>
-                ${isCheapest ? '<span class="cheapest-badge"><i class="fa-solid fa-check"></i> Menor</span>' : ''}
-              </td>
-            `;
-          } else {
-            tbodyHTML += `
-              <td style="color: var(--text-muted); font-size: 0.78rem;">
-                <div>N/D</div>
-                <div class="found-product-detail">Não encontrado na busca</div>
-              </td>
-            `;
-          }
+              `;
+            } else {
+              marketsHTML += `
+                <div class="price-market-badge" style="opacity: 0.6;">
+                  <div class="price-market-info">
+                    <span class="price-market-name">${escapeHTML(m)}</span>
+                    <div class="price-market-subtext">Não encontrado na busca</div>
+                  </div>
+                  <div class="price-market-values">
+                    <div class="price-market-total" style="font-size: 0.85rem; color: var(--text-muted);">N/D</div>
+                  </div>
+                </div>
+              `;
+            }
+          });
+          marketsHTML += `</div>`;
+
+          row.innerHTML = `
+            <div style="display: flex; flex-direction: column;">
+              <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="openPriceHistoryModal('${escapeHTML(res.name)}')">
+                <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                  <span class="item-name" style="font-size: 0.95rem; font-weight: 700;">${escapeHTML(res.name)}</span>
+                  <span class="material-icons-outlined" style="font-size: 0.95rem; color: #0284c7; opacity: 0.85; flex-shrink: 0;" title="Ver histórico de preço">show_chart</span>
+                </div>
+                <span class="qty-display-badge" style="font-size: 0.78rem; padding: 2px 8px; flex-shrink: 0;">${res.qty} un</span>
+              </div>
+              ${marketsHTML}
+            </div>
+          `;
+          productList.appendChild(row);
         });
 
-        tbodyHTML += `</tr>`;
+        card.appendChild(header);
+        card.appendChild(productList);
+        categoryContainer.appendChild(card);
       });
 
-      tbodyHTML += `</tbody>`;
-
-      let tfootHTML = `<tfoot><tr style="background: #f8fafc; font-weight: 800;"><td style="text-align: left; padding: 12px 8px;">CARRINHO TOTAL:</td>`;
-      markets.forEach(m => {
-        tfootHTML += `<td style="padding: 12px 8px; color: #0f172a; font-size: 0.95rem;">R$ ${totalsByMarket[m].toFixed(2)}</td>`;
-      });
-      tfootHTML += `</tr></tfoot>`;
-
-      table.innerHTML = theadHTML + tbodyHTML + tfootHTML;
       document.getElementById('compareResults').style.display = 'block';
     }
 
