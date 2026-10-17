@@ -15,6 +15,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <!-- Chart.js para o histórico de preços -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <!-- Material Icons & Google Fonts -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
@@ -709,6 +712,25 @@
       color: #92400e;
       border: 1px solid #fde68a;
     }
+
+    /* Estilos específicos para o Scanner de Cupom Fiscal e Histórico de Preços */
+    .scanned-item-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .match-tag {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      display: inline-block;
+    }
+    .match-exact { background: #d1fae5; color: #065f46; }
+    .match-suggested { background: #fef3c7; color: #92400e; }
+    .match-none { background: #f1f5f9; color: #475569; }
   </style>
 </head>
 <body>
@@ -862,6 +884,55 @@
 
       </div>
     </section>
+
+    <!-- SEÇÃO 4: SCANNER DE CUPOM FISCAL -->
+    <section id="receiptSection" style="display: none;">
+      <div class="compare-card space-y-4">
+        <div style="border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+          <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text);">Escanear Cupom Fiscal</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Tire uma foto ou envie a imagem do cupom para atualizar o histórico de preços por unidade.</p>
+        </div>
+
+        <!-- Inputs Ocultos para Câmera e Galeria -->
+        <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" style="display: none;" onchange="processReceiptImage(this.files[0])">
+        <input type="file" id="receiptGalleryInput" accept="image/*" style="display: none;" onchange="processReceiptImage(this.files[0])">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+          <button onclick="document.getElementById('receiptCameraInput').click()" style="background: var(--primary); color: white; border: none; padding: 14px 10px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: var(--shadow-sm);">
+            <span class="material-icons-outlined" style="font-size: 1.6rem;">photo_camera</span> Tirar Foto do Cupom
+          </button>
+
+          <button onclick="document.getElementById('receiptGalleryInput').click()" style="background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 14px 10px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: var(--shadow-sm);">
+            <span class="material-icons-outlined" style="font-size: 1.6rem; color: #0284c7;">collections</span> Escolher da Galeria
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State da Leitura do Cupom -->
+      <div id="receiptLoading" style="display: none; text-align: center; padding: 30px 20px; background: #fff; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 16px;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
+        <p style="font-weight: 700; font-size: 0.95rem; color: var(--text);">Processando e otimizando imagem...</p>
+        <p id="receiptLoadingSub" style="font-size: 0.8rem; color: var(--text-muted);">Extraindo itens e valores usando Gemini 3.8-flash...</p>
+      </div>
+
+      <!-- Resultados da Leitura e Validação -->
+      <div id="receiptResultsContainer" style="display: none;">
+        <div class="compare-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-size: 1rem; font-weight: 800; color: var(--text);">Itens Extraídos do Cupom</h3>
+            <span id="receiptMarketTag" style="font-size: 0.8rem; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 12px;">-</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">Confira a correspondência de cada item lido com o seu catálogo antes de salvar.</p>
+
+          <div id="scannedItemsList"></div>
+
+          <button onclick="saveReceiptPricesToHistory()" style="width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; font-size: 1rem; margin-top: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span class="material-icons-outlined">save</span> Confirmar e Salvar no Histórico
+          </button>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <button class="fab" id="fabBtn" onclick="openAddModal()">
@@ -881,6 +952,12 @@
         <span class="nav-badge" id="listBadge" style="display: none;">0</span>
       </span>
       <span>Minha Lista</span>
+    </div>
+    <div class="nav-item" id="navReceipt" onclick="switchTab('receipt')">
+      <span class="nav-icon-wrapper">
+        <span class="material-icons-outlined">receipt_long</span>
+      </span>
+      <span>Escanear Cupom</span>
     </div>
     <div class="nav-item" id="navCompare" onclick="switchTab('compare')">
       <span class="nav-icon-wrapper">
@@ -963,6 +1040,51 @@
     </div>
   </div>
 
+  <!-- MODAL: HISTÓRICO DE PREÇOS DO PRODUTO (ACESSADO NA LISTA DE COMPRAS) -->
+  <div class="modal-overlay" id="priceHistoryModal">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="historyModalTitle" style="font-size: 1.15rem; font-weight: 800;">Histórico de Preços</h3>
+          <p id="historyModalSubtitle" style="font-size: 0.8rem; color: var(--text-muted);">-</p>
+        </div>
+        <span class="material-icons-outlined" onclick="closePriceHistoryModal()" style="cursor:pointer;">close</span>
+      </div>
+
+      <div style="position: relative; height: 220px; width: 100%; margin-bottom: 16px;">
+        <canvas id="priceHistoryChart"></canvas>
+      </div>
+
+      <div style="max-height: 180px; overflow-y: auto; border-top: 1px solid var(--border); padding-top: 10px;">
+        <h4 style="font-size: 0.88rem; font-weight: 700; margin-bottom: 8px; color: var(--text);">Registros de Compra Recentes</h4>
+        <div id="priceHistoryList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+
+      <button class="btn btn-secondary" onclick="closePriceHistoryModal()" style="margin-top: 14px;">Fechar</button>
+    </div>
+  </div>
+
+  <!-- MODAL: CORRESPONDÊNCIA MANUAL DE PRODUTO -->
+  <div class="modal-overlay" id="matchManualModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Vincular Produto ao Catálogo</h3>
+        <span class="material-icons-outlined" onclick="closeMatchManualModal()" style="cursor:pointer;">close</span>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Selecione o produto do seu catálogo que corresponde ao item lido no cupom:</p>
+      
+      <input type="hidden" id="matchItemIndex">
+      <div class="form-group">
+        <label>Produto do Catálogo</label>
+        <select id="matchCatalogSelect"></select>
+      </div>
+      <button class="btn btn-primary" onclick="confirmManualMatch()">
+        <span class="material-icons-outlined">link</span> Confirmar Vinculação
+      </button>
+      <button class="btn btn-secondary" onclick="closeMatchManualModal()">Cancelar</button>
+    </div>
+  </div>
+
   <!-- MODAL: CONFIG & FIREBASE -->
   <div class="modal-overlay" id="configModal">
     <div class="modal">
@@ -982,6 +1104,19 @@
         <span class="material-icons-outlined">logout</span> Desconectar da Conta
       </button>
       
+      <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
+
+      <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Histórico & Gráficos</h4>
+      <div class="form-group">
+        <label>Período Padrão do Histórico de Preços</label>
+        <select id="historyPeriodInput">
+          <option value="30">Últimos 30 dias (1 mês)</option>
+          <option value="90" selected>Últimos 90 dias (3 meses - Padrão)</option>
+          <option value="180">Últimos 180 dias (6 meses)</option>
+          <option value="365">Último ano (12 meses)</option>
+        </select>
+      </div>
+
       <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
 
       <h4 style="margin-bottom: 10px; font-size: 1rem; font-weight: 700; color: var(--text);">Supermercados Pesquisados</h4>
@@ -1208,6 +1343,7 @@
     let itemsList = [];
     let catalogCategories = [];
     let priceCache = {};
+    let priceHistory = {}; // Estrutura para armazenar o histórico de preços por produto
     let openCategories = new Set();
     let activeFirebaseRef = null;
     let activeFirebaseListener = null;
@@ -1215,6 +1351,10 @@
     let geminiApiKey = localStorage.getItem('app_gemini_key') || '';
     let geminiModel = localStorage.getItem('app_gemini_model') || 'gemini-3.8-flash';
     let configuredSupermarkets = (localStorage.getItem('app_supermarkets') || 'Angeloni, Giassi').split(',').map(s => s.trim()).filter(Boolean);
+    let historyDays = parseInt(localStorage.getItem('app_history_days')) || 90; // 90 dias como padrão (3 meses)
+
+    let scannedReceiptData = null; // Armazena temporariamente a leitura do cupom fiscal
+    let priceHistoryChartInstance = null;
 
     const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -1307,6 +1447,7 @@
       document.getElementById('geminiApiKeyInput').value = geminiApiKey;
       document.getElementById('geminiModelInput').value = geminiModel;
       document.getElementById('supermarketsInput').value = configuredSupermarkets.join(', ');
+      document.getElementById('historyPeriodInput').value = historyDays;
 
       loadLocalData();
       populateCategorySelect();
@@ -1380,12 +1521,16 @@
 
       const localCache = localStorage.getItem(`priceCache_${currentRoom}`);
       priceCache = localCache ? JSON.parse(localCache) : {};
+
+      const localHistory = localStorage.getItem(`priceHistory_${currentRoom}`);
+      priceHistory = localHistory ? JSON.parse(localHistory) : {};
     }
 
     function saveLocalData() {
       localStorage.setItem(`catalog_${currentRoom}`, JSON.stringify(catalogCategories));
       localStorage.setItem(`list_${currentRoom}`, JSON.stringify(itemsList));
       localStorage.setItem(`priceCache_${currentRoom}`, JSON.stringify(priceCache));
+      localStorage.setItem(`priceHistory_${currentRoom}`, JSON.stringify(priceHistory));
     }
 
     function setupFirebaseSync() {
@@ -1406,6 +1551,7 @@
             itemsList = data.list || [];
             catalogCategories = mergeCatalog(data.catalog);
             priceCache = data.priceCache || {};
+            priceHistory = data.priceHistory || {};
 
             saveLocalData();
             populateCategorySelect();
@@ -1432,7 +1578,7 @@
       saveLocalData();
 
       if (window.appChannel) {
-        window.appChannel.postMessage({ type: 'sync', room: currentRoom, itemsList, catalogCategories, priceCache });
+        window.appChannel.postMessage({ type: 'sync', room: currentRoom, itemsList, catalogCategories, priceCache, priceHistory });
       }
 
       if (activeFirebaseRef) {
@@ -1440,6 +1586,7 @@
           list: itemsList,
           catalog: catalogCategories,
           priceCache: priceCache,
+          priceHistory: priceHistory,
           updatedAt: Date.now()
         }).catch(err => console.error("Erro ao salvar:", err));
       }
@@ -1453,6 +1600,7 @@
             itemsList = event.data.itemsList;
             catalogCategories = mergeCatalog(event.data.catalogCategories);
             priceCache = event.data.priceCache || {};
+            priceHistory = event.data.priceHistory || {};
             saveLocalData();
             populateCategorySelect();
             renderCatalog();
@@ -1478,14 +1626,16 @@
       currentTab = tab;
       document.getElementById('navCatalog').classList.toggle('active', tab === 'catalog');
       document.getElementById('navList').classList.toggle('active', tab === 'list');
+      document.getElementById('navReceipt').classList.toggle('active', tab === 'receipt');
       document.getElementById('navCompare').classList.toggle('active', tab === 'compare');
 
       document.getElementById('catalogSection').style.display = tab === 'catalog' ? 'block' : 'none';
       document.getElementById('listSection').style.display = tab === 'list' ? 'block' : 'none';
+      document.getElementById('receiptSection').style.display = tab === 'receipt' ? 'block' : 'none';
       document.getElementById('compareSection').style.display = tab === 'compare' ? 'block' : 'none';
 
-      document.getElementById('searchBoxContainer').style.display = tab === 'compare' ? 'none' : 'block';
-      document.getElementById('fabBtn').style.display = tab === 'compare' ? 'none' : 'flex';
+      document.getElementById('searchBoxContainer').style.display = (tab === 'compare' || tab === 'receipt') ? 'none' : 'block';
+      document.getElementById('fabBtn').style.display = (tab === 'compare' || tab === 'receipt') ? 'none' : 'flex';
     }
 
     function getCategoryInfo(catName) {
@@ -1641,12 +1791,13 @@
           
           row.innerHTML = `
             <div class="item-main-content">
-              <div class="item-info" onclick="toggleCheckItem('${item.id}')" style="cursor:pointer;">
+              <div class="item-info" onclick="openPriceHistoryModal('${escapeHTML(item.name)}')" style="cursor:pointer;" title="Clique para ver o Histórico de Preços">
                 <div class="item-title-row">
-                  <span class="material-icons-outlined" style="color: ${item.checked ? 'var(--primary)' : 'var(--text-muted)'}; font-size: 1.4rem;">
+                  <span class="material-icons-outlined" onclick="event.stopPropagation(); toggleCheckItem('${item.id}')" style="color: ${item.checked ? 'var(--primary)' : 'var(--text-muted)'}; font-size: 1.4rem;">
                     ${item.checked ? 'check_box' : 'check_box_outline_blank'}
                   </span>
                   <span class="item-name">${escapeHTML(item.name)}</span>
+                  <span class="material-icons-outlined" style="font-size: 1rem; color: #0284c7; opacity: 0.7;" title="Ver histórico de preço">show_chart</span>
                 </div>
                 ${item.comment ? `<div class="item-desc-subtitle" style="padding-left: 28px;">${escapeHTML(item.comment)}</div>` : ''}
               </div>
@@ -1668,6 +1819,415 @@
         card.appendChild(productList);
         container.appendChild(card);
       });
+    }
+
+    /* HISTÓRICO DE PREÇOS E GRÁFICOS NO MODAL AO CLICAR EM UM ITEM DA LISTA */
+    function openPriceHistoryModal(productName) {
+      const modal = document.getElementById('priceHistoryModal');
+      document.getElementById('historyModalTitle').innerText = productName;
+      
+      const historyEntries = priceHistory[productName.toLowerCase().trim()] || [];
+      const cutoffDate = Date.now() - (historyDays * 24 * 60 * 60 * 1000);
+      const filteredEntries = historyEntries.filter(e => new Date(e.date).getTime() >= cutoffDate);
+
+      document.getElementById('historyModalSubtitle').innerText = `Período: últimos ${historyDays} dias (${filteredEntries.length} registro(s))`;
+
+      const historyListEl = document.getElementById('priceHistoryList');
+      historyListEl.innerHTML = '';
+
+      if (filteredEntries.length === 0) {
+        historyListEl.innerHTML = `
+          <div style="font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 10px;">
+            Nenhum registro de preço pago encontrado neste período.
+          </div>
+        `;
+      } else {
+        // Ordena do mais recente para o mais antigo
+        [...filteredEntries].reverse().forEach(entry => {
+          const dateFormatted = new Date(entry.date).toLocaleDateString('pt-BR');
+          const unitStr = entry.unit ? ` / ${entry.unit}` : '';
+          const row = document.createElement('div');
+          row.style.cssText = `
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f8fafc; padding: 8px 10px; border-radius: 6px; font-size: 0.82rem; border: 1px solid var(--border);
+          `;
+          row.innerHTML = `
+            <div>
+              <span style="font-weight: 700; color: var(--text);">${escapeHTML(entry.market || 'Mercado')}</span>
+              <span style="color: var(--text-muted); margin-left: 6px;">(${dateFormatted})</span>
+            </div>
+            <div style="font-weight: 800; color: var(--primary-dark);">
+              R$ ${parseFloat(entry.unitPrice).toFixed(2)}${unitStr}
+            </div>
+          `;
+          historyListEl.appendChild(row);
+        });
+      }
+
+      // Renderiza o Gráfico com Chart.js
+      renderPriceHistoryChart(filteredEntries);
+
+      modal.classList.add('active');
+    }
+
+    function closePriceHistoryModal() {
+      document.getElementById('priceHistoryModal').classList.remove('active');
+      if (priceHistoryChartInstance) {
+        priceHistoryChartInstance.destroy();
+        priceHistoryChartInstance = null;
+      }
+    }
+
+    function renderPriceHistoryChart(entries) {
+      const ctx = document.getElementById('priceHistoryChart').getContext('2d');
+
+      if (priceHistoryChartInstance) {
+        priceHistoryChartInstance.destroy();
+      }
+
+      const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const labels = sorted.map(e => new Date(e.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+      const values = sorted.map(e => e.unitPrice);
+
+      priceHistoryChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Preço por Unidade (R$)',
+            data: values,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#059669'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: {
+                callback: function(value) { return 'R$ ' + value.toFixed(2); }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    /* PROCESSAMENTO E EXTRAÇÃO DE CUPOM FISCAL */
+    async function processReceiptImage(file) {
+      if (!file) return;
+
+      document.getElementById('receiptResultsContainer').style.display = 'none';
+      document.getElementById('receiptLoading').style.display = 'block';
+
+      try {
+        const optimizedBase64 = await otimizarImagemParaGemini(file);
+        
+        if (geminiApiKey) {
+          const apiResponse = await callGeminiReceiptVisionAPI(optimizedBase64);
+          scannedReceiptData = apiResponse;
+        } else {
+          await new Promise(r => setTimeout(r, 800));
+          scannedReceiptData = generateMockReceiptData();
+        }
+
+        renderScannedReceiptValidation();
+      } catch (err) {
+        console.error("Erro ao ler cupom fiscal:", err);
+        alert("Ocorreu um erro ao processar o cupom fiscal. Verifique sua chave de API do Gemini e tente novamente.");
+      } finally {
+        document.getElementById('receiptLoading').style.display = 'none';
+      }
+    }
+
+    function otimizarImagemParaGemini(file, maxLargura = 768, maxAltura = 1536) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            let largura = img.width;
+            let altura = img.height;
+
+            if (largura > maxLargura) {
+              altura = Math.round((altura * maxLargura) / largura);
+              largura = maxLargura;
+            }
+            if (altura > maxAltura) {
+              largura = Math.round((largura * maxAltura) / altura);
+              altura = maxAltura;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = largura;
+            canvas.height = altura;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, largura, altura);
+
+            const base64Otimizado = canvas.toDataURL('image/jpeg', 0.80);
+            resolve(base64Otimizado);
+          };
+        };
+      });
+    }
+
+    async function callGeminiReceiptVisionAPI(base64Image) {
+      const pureBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
+
+      const systemPrompt = `Você é um leitor de OCR especializado em cupons fiscais do Brasil.
+Extraia o Nome do Supermercado, a Data da Compra (no formato YYYY-MM-DD) e a lista de produtos comprados.
+Para cada produto, extraia:
+- "rawName": Nome conforme aparece no cupom
+- "qty": Quantidade (padrão 1)
+- "unitPrice": Preço por unidade ou por kg/litro
+- "unit": Unidade de medida ("kg", "L", "un")
+
+Responda ESTRITAMENTE em JSON sem markdown no seguinte formato:
+{
+  "supermarket": "Nome do Mercado",
+  "date": "YYYY-MM-DD",
+  "items": [
+    { "rawName": "ARROZ TIO JOAO 5KG", "qty": 1, "unitPrice": 24.90, "unit": "un" },
+    { "rawName": "CONTRA FILE BOV", "qty": 1.25, "unitPrice": 45.90, "unit": "kg" }
+  ]
+}`;
+
+      const payload = {
+        contents: [{
+          parts: [
+            { text: "Analise o cupom fiscal na imagem e extraia os itens conforme solicitado:" },
+            { inlineData: { mimeType: "image/jpeg", data: pureBase64 } }
+          ]
+        }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      const selectedModel = geminiModel || 'gemini-3.8-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${geminiApiKey}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro API Vision: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleanJson);
+    }
+
+    function generateMockReceiptData() {
+      const today = new Date().toISOString().split('T')[0];
+      return {
+        supermarket: "Giassi Supermercados",
+        date: today,
+        items: [
+          { rawName: "ARROZ TIO JOAO 5KG", qty: 1, unitPrice: 26.90, unit: "un" },
+          { rawName: "FEIJAO CARIOCA 1KG", qty: 2, unitPrice: 7.49, unit: "un" },
+          { rawName: "PEITO DE FRANGO KG", qty: 1.45, unitPrice: 16.90, unit: "kg" },
+          { rawName: "LEITE INTEGRAL 1L", qty: 6, unitPrice: 4.89, unit: "un" }
+        ]
+      };
+    }
+
+    /* BUSCA DE CORRESPONDÊNCIA NO CATÁLOGO E CONFIRMAÇÃO */
+    function findBestCatalogMatch(rawName) {
+      const cleanRaw = rawName.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+      let bestMatch = null;
+      let highestScore = 0;
+
+      catalogCategories.forEach(cat => {
+        cat.items.forEach(item => {
+          const cleanItem = item.name.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+          
+          if (cleanRaw.includes(cleanItem) || cleanItem.includes(cleanRaw)) {
+            const score = cleanItem.length;
+            if (score > highestScore) {
+              highestScore = score;
+              bestMatch = { name: item.name, category: cat.name };
+            }
+          }
+        });
+      });
+
+      return bestMatch;
+    }
+
+    function renderScannedReceiptValidation() {
+      if (!scannedReceiptData) return;
+
+      document.getElementById('receiptMarketTag').innerText = `${scannedReceiptData.supermarket} (${scannedReceiptData.date})`;
+
+      const container = document.getElementById('scannedItemsList');
+      container.innerHTML = '';
+
+      scannedReceiptData.items.forEach((item, index) => {
+        if (!item.matchedName) {
+          const match = findBestCatalogMatch(item.rawName);
+          if (match) {
+            item.matchedName = match.name;
+            item.matchedCategory = match.category;
+            item.matchType = 'suggested';
+          } else {
+            item.matchedName = null;
+            item.matchType = 'none';
+          }
+        }
+
+        const card = document.createElement('div');
+        card.className = 'scanned-item-card';
+
+        let badgeHTML = '';
+        if (item.matchType === 'confirmed' || item.matchType === 'suggested') {
+          badgeHTML = `<span class="match-tag match-exact"><i class="fa-solid fa-check"></i> Vinculado: ${escapeHTML(item.matchedName)}</span>`;
+        } else {
+          badgeHTML = `<span class="match-tag match-none">Sem correspondência direta</span>`;
+        }
+
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.92rem; color: var(--text);">${escapeHTML(item.rawName)}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                Preço: <strong>R$ ${item.unitPrice.toFixed(2)}</strong> / ${escapeHTML(item.unit || 'un')} (Qtd: ${item.qty})
+              </div>
+              <div style="margin-top: 6px;">${badgeHTML}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px;">
+            ${item.matchedName ? `
+              <button onclick="confirmItemMatch(${index})" style="flex:1; background: var(--primary-light); color: var(--primary-dark); border: 1px solid var(--primary-border); padding: 6px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                Confirmar
+              </button>
+            ` : ''}
+            <button onclick="openMatchManualModal(${index})" style="flex:1; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 6px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+              Vincular Manual
+            </button>
+            <button onclick="addScannedToCatalog(${index})" style="flex:1; background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 6px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+              + Adicionar Catálogo
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      document.getElementById('receiptResultsContainer').style.display = 'block';
+    }
+
+    function confirmItemMatch(index) {
+      if (scannedReceiptData && scannedReceiptData.items[index]) {
+        scannedReceiptData.items[index].matchType = 'confirmed';
+        renderScannedReceiptValidation();
+      }
+    }
+
+    function openMatchManualModal(index) {
+      document.getElementById('matchItemIndex').value = index;
+      const select = document.getElementById('matchCatalogSelect');
+      select.innerHTML = '';
+
+      catalogCategories.forEach(cat => {
+        cat.items.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = `${item.name}::${cat.name}`;
+          opt.innerText = `${item.name} (${cat.name})`;
+          select.appendChild(opt);
+        });
+      });
+
+      document.getElementById('matchManualModal').classList.add('active');
+    }
+
+    function closeMatchManualModal() {
+      document.getElementById('matchManualModal').classList.remove('active');
+    }
+
+    function confirmManualMatch() {
+      const index = parseInt(document.getElementById('matchItemIndex').value);
+      const val = document.getElementById('matchCatalogSelect').value;
+      if (val && scannedReceiptData && scannedReceiptData.items[index]) {
+        const [prodName, catName] = val.split('::');
+        scannedReceiptData.items[index].matchedName = prodName;
+        scannedReceiptData.items[index].matchedCategory = catName;
+        scannedReceiptData.items[index].matchType = 'confirmed';
+        renderScannedReceiptValidation();
+      }
+      closeMatchManualModal();
+    }
+
+    function addScannedToCatalog(index) {
+      if (!scannedReceiptData || !scannedReceiptData.items[index]) return;
+      const item = scannedReceiptData.items[index];
+
+      const newName = prompt('Nome do produto a ser cadastrado no catálogo:', item.rawName);
+      if (!newName) return;
+
+      let cat = catalogCategories.find(c => c.name === 'Mercearia') || catalogCategories[0];
+      cat.items.push({ name: newName, comment: `Unidade: ${item.unit || 'un'}` });
+
+      item.matchedName = newName;
+      item.matchedCategory = cat.name;
+      item.matchType = 'confirmed';
+
+      syncToCloud();
+      renderCatalog();
+      renderScannedReceiptValidation();
+      alert(`Produto "${newName}" adicionado ao catálogo!`);
+    }
+
+    function saveReceiptPricesToHistory() {
+      if (!scannedReceiptData) return;
+
+      let countSaved = 0;
+      const marketName = scannedReceiptData.supermarket || 'Mercado';
+      const dateStr = scannedReceiptData.date || Date.now();
+
+      scannedReceiptData.items.forEach(item => {
+        if (item.matchedName && item.unitPrice) {
+          const key = item.matchedName.toLowerCase().trim();
+          if (!priceHistory[key]) {
+            priceHistory[key] = [];
+          }
+
+          priceHistory[key].push({
+            date: dateStr,
+            market: marketName,
+            unitPrice: item.unitPrice,
+            unit: item.unit || 'un'
+          });
+
+          countSaved++;
+        }
+      });
+
+      if (countSaved === 0) {
+        return alert('Nenhum produto vinculado ao catálogo para salvar no histórico. Faça a vinculação manual dos itens.');
+      }
+
+      syncToCloud();
+      alert(`${countSaved} registro(s) de preços salvos no histórico com sucesso!`);
+      document.getElementById('receiptResultsContainer').style.display = 'none';
+      scannedReceiptData = null;
     }
 
     function openEditModal(oldName, oldComment, categoryName) {
@@ -1893,6 +2453,9 @@
 
       geminiModel = document.getElementById('geminiModelInput').value;
       localStorage.setItem('app_gemini_model', geminiModel);
+
+      historyDays = parseInt(document.getElementById('historyPeriodInput').value) || 90;
+      localStorage.setItem('app_history_days', historyDays);
 
       const marketsRaw = document.getElementById('supermarketsInput').value.trim();
       const newMarkets = marketsRaw ? marketsRaw.split(',').map(s => s.trim()).filter(Boolean) : ['Angeloni', 'Giassi'];
